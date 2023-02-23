@@ -1,0 +1,1 @@
+apt-get update && apt-get install python3 pip -y && cd FlaskWiki && pip install -r requirements.txt && cd Website && python3 app.py && echo "hello"

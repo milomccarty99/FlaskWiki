@@ -1,0 +1,34 @@
+version: "3"
+services:
+  website:
+    image: ubuntu:latest
+    ports:
+      - "80:80"
+    stdin_open: true
+    tty: true
+    restart: always
+    volumes:
+      - "./:/FlaskWiki"
+    depends_on:
+      - mongoDBRepair
+      - mongoDB
+    command:
+      bash ./FlaskWiki/startup.sh
+
+  mongoDBRepair:
+    image: mongo:latest
+    volumes:
+      - "./Data:/data/db"
+      - "./Data/configdb:/data/configdb"
+    command: --repair
+
+  mongoDB:
+    image: mongo:latest
+    restart: always
+    ports: 
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - "./Data:/data/db"
+      - "./Data/configdb:/data/configdb"
+    depends_on:
+      - mongoDBRepair

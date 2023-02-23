@@ -396,3 +396,10 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# MongoDB Data
+Data/
+Data/*
+
+# Constants
+Website/constants.py
