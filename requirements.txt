@@ -4,3 +4,4 @@ flask-login
 bootstrap-flask
 pymongo
 requests
+markdown

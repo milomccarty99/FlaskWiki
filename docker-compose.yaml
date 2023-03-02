@@ -14,6 +14,9 @@ services:
       - mongoDB
     command:
       bash ./FlaskWiki/startup.sh
+    networks:
+      flask-wiki-network:
+        ipv4_address: 192.168.92.22
 
   mongoDBRepair:
     image: mongo:latest
@@ -32,3 +35,14 @@ services:
       - "./Data/configdb:/data/configdb"
     depends_on:
       - mongoDBRepair
+
+    networks:
+      flask-wiki-network:
+        ipv4_address: 192.168.92.21
+
+networks:
+  flask-wiki-network:
+    ipam:
+      driver: default
+      config:
+        - subnet: "192.168.92.0/24"
