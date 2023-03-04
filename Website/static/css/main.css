@@ -13,3 +13,27 @@ h2 {
 h3 {
     color:blueviolet
 }
+label {
+    display:inline-block;
+    float: left;
+    clear: left;
+    width: 250px;
+    text-align: right;
+}
+input {
+    margin-left: 12px;
+    display: inline-block;
+    float: left;
+}
+textarea {
+    margin-left: 12px
+}
+select {
+    margin-left: 12px;
+    display: inline-block;
+    float: left;
+}
+button {
+    display: inline-block;
+    float: left;
+}
