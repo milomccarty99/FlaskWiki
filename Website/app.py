@@ -1,5 +1,6 @@
 import flask
 from flask import Flask, render_template, request, url_for, redirect, jsonify, flash, session
+from flask_session import Session
 from flask_bootstrap import Bootstrap5
 from pymongo import MongoClient
 import requests
@@ -17,7 +18,11 @@ import constants
 
 app = flask.Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'static/images'
+app.config['SESSION_PERMANENT'] = False
+app.config['SESSION_TYPE'] = "filesystem"
+
 bootsrtap = Bootstrap5(app)
+Session(app)
 
 mongoclient = MongoClient("mongodb://192.168.92.21:27017")
 pagecollections = mongoclient["pagecollections"]
@@ -26,11 +31,13 @@ usercollections = mongoclient["usercollections"]
 users = usercollections["users"]
 
 tags = ["burn-on-read","user-edit","contains-redacted","all-articles"]
+headline = "Ian, check your messages"
+
 
 def burn_post(id):
     post_info = wikiarticles.find_one({"_id":id})
     if not post_info:
-        return false
+        return False
     title = post_info.get("title")
     md = post_info.get("md")
     tags = post_info.get("tags")
@@ -40,9 +47,22 @@ def burn_post(id):
     wikiarticles.delete_one({"_id":id})
     wikiarticles.insert_one({"_id":id,"title":title,"md":md,"tags":tags,"created":created,"edit":edit,"publish":publish,"burned":True})
 
+@app.context_processor
+def inject_template_scope():
+    injections = dict()
+
+    def cookies_check():
+        value = request.cookies.get('cookie_consent')
+        return value == 'true' # no boolean zen
+    injections.update(cookies_check=cookies_check)
+    
+    return injections
+
 @app.route('/',methods=['GET','POST'])
 def home_page():
-    return render_template('homepage.html')
+    if not session.get("username"):
+        return redirect("/login")
+    return render_template('homepage.html', headline=headline)
 
 @app.route('/add', methods=['GET', 'POST'])
 def add_page():
@@ -54,7 +74,7 @@ def add_page():
         tags_used = request.form.getlist("tagsUsed")
         wikiarticles.insert_one({"_id": article_id, "title":article_title,"md":article_body,"tags":tags_used,"created":datetime.utcnow(),"edit":datetime.utcnow(),"publish":article_publishdatetime, "burned":False})
         return redirect('/content/' + article_id)
-    return render_template('add.html', id_readonly="",tags=tags,id="",title="",mdtext="Enter article info here", selected_tags=["user-edit","all-articles"])
+    return render_template('add.html', id_readonly="",tags=tags,id="",title="",mdtext="Enter article info here", selected_tags=["user-edit","all-articles"], headline=headline)
 
 @app.route('/content/<id>', methods=['GET','POST'])
 def content_page(id):
@@ -71,7 +91,7 @@ def site_page(id):
     tags_used = page_info.get("tags")
     if "burn-on-read" in tags_used:
         burn_post(id)
-    return render_template('page.html',id=id,title=title,pagebody=pagebody, page_id=id, tags=tags_used)
+    return render_template('page.html',id=id,title=title,pagebody=pagebody, page_id=id, tags=tags_used, headline=headline)
 
 @app.route('/page/edit/<id>', methods=['GET','POST'])
 def edit_site_page(id):
@@ -92,7 +112,7 @@ def edit_site_page(id):
         wikiarticles.delete_one({"_id":id})
         wikiarticles.insert_one({"_id": id, "title":article_title,"md":article_body,"tags":tags_used,"created":datecreated,"edit":datetime.utcnow(),"publish":article_publishdatetime, "burned":False})
         return redirect ('/content/' + id)
-    return render_template('add.html',id_readonly="readonly",tags=tags,id=id,title=title,mdtext=mdtext, selected_tags=selected_tags)
+    return render_template('add.html',id_readonly="readonly",tags=tags,id=id,title=title,mdtext=mdtext, selected_tags=selected_tags, headline=headline)
 
 @app.route('/articles', methods=['GET', 'POST'])
 def articles_page():
@@ -100,7 +120,7 @@ def articles_page():
     numarticles = len(allarticles)
     if numarticles <= 0:
         return "no pages are set up"
-    return render_template('pagelist.html',articles=allarticles)
+    return render_template('pagelist.html',articles=allarticles, headline=headline)
 
 @app.route('/random', methods=['GET', 'POST'])
 def random_page():
@@ -122,18 +142,22 @@ def users_page():
 @app.route('/login', methods=['GET','POST'])
 def login_page():
     if request.method == 'POST':
-        pass
-    return render_template('session/login.html')
+        # record the username
+        session["username"] = request.form.get("inputUsername")
+        return redirect(url_for('home_page'))
+
+    return render_template('session/login.html', headline=headline)
 
 @app.route('/register', methods=['GET','POST'])
 def register_page():
     if request.method == 'POST':
         pass
-    return render_template('session/register.html')
+    return render_template('session/register.html', headline=headline)
 
 @app.route('/logout', methods=['GET','POST'])
 def logout():
     #session.pop('username')
+    session['username'] = None
     return redirect(url_for('home_page'))
 
 if __name__ == '__main__':

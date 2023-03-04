@@ -75,3 +75,12 @@ button {
     display: inline-block;
     float: left;
 }
+blockquote{
+    margin-left: 12px;
+    background-color: chartreuse;
+}
+img {
+    display: inline-block;
+    margin-left: 12px;
+    padding-left: 12px;
+}

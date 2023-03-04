@@ -8,19 +8,14 @@
     <link rel="stylesheet" href="{{url_for('static',filename='css/main.css')}}"/>
 </head>
 <body>
-    <div id="header-placeholder"></div>
-    <div id="nav-placeholder">
+    {% from 'html/cookiebanner.html' import cookiebanner with context %}
+    {% from 'html/header.html' import header with context %}
+    {% from 'html/navbar.html' import navbar with context %}
+    {% from 'html/header.html' import header with context %}
+    {{header(headline)}}
+    {{navbar()}}
+    {{cookiebanner()}}
 
-    </div>
-
-    <script>
-        $(function () {
-            $("#nav-placeholder").load("{{ url_for('static',filename='html/navbar.html') }}");
-        });
-        $(function () {
-            $("#header-placeholder").load("{{url_for('static', filename='html/header.html')}}");
-        });
-    </script>
     <h2>All Articles</h2>
     <p>Here is a list of all of the site's articles</p>
     {%for article in articles%}

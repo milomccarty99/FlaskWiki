@@ -8,32 +8,34 @@
     <link rel="stylesheet" href="{{url_for('static',filename='css/main.css')}}" />
 
     <script>
-        function mySubmit(obj) {
+        function validateAndSubmit(obj) {
             var pswObj = document.getElementById('inputPassword');
-            var hashObj = new jsSHA("SHA-512", "TEXT", { numRounds: 1 });
-            hashObj.update(pswObj.value);
-            var hash = hashObj.getHash("HEX");
-            pswObj.value = hash;
+            var pswObj2 = document.getElementById('reenterPassword')
+            if (pswObj.value == pswObj2.value) {
+                var hashObj = new jsSHA("SHA-512", "TEXT", { numRounds: 1 });
+                hashObj.update(pswObj.value);
+                var hash = hashObj.getHash("HEX");
+                pswObj.value = hash;
+                return true;
+            }
+            else {
+                alert("Passwords do not match");
+                return false;
+            }
+            
         }
     </script>
 </head>
 <body>
-    <div id="header-placeholder"></div>
-    <div id="nav-placeholder">
+    {% from 'html/cookiebanner.html' import cookiebanner with context %}
+    {% from 'html/header.html' import header with context %}
+    {% from 'html/navbar.html' import navbar with context %}
+    {% from 'html/header.html' import header with context %}
+    {{header(headline)}}
+    {{navbar()}}
+    {{cookiebanner()}}
 
-    </div>
-    <script>
-        $(function () {
-            $("#nav-placeholder").load("{{ url_for('static',filename='html/navbar.html') }}");
-        });
-        $(function () {
-            $("#header-placeholder").load("{{url_for('static', filename='html/header.html')}}");
-        });
-        $(function () {
-            $("#navbar-adminconsole").load("{{url_for('static', filename='html/adminconsole.html')}}");
-        });
-    </script>
-    <form method="post">
+    <form method="post" onsubmit="return validateAndSubmit(this);">
         <div class="mb-3">
             <label for="inputUsername" class="form-label">Username</label>
             <input type="text" id="inputUsername" required>
@@ -44,17 +46,17 @@
         </div>
         <div class="mb-3">
             <label for="inputPassword" class="form-label">Password</label>
-            <input type="password" id="inputPassword" required>
+            <input type="password" id="inputPassword" min="8" required>
         </div>
         <div class="mb-3">
             <label for="reenterPassword" class="form-label">Re-enter Password</label>
-            <input type="password" id="reenterPassword"  required/>
+            <input type="password" id="reenterPassword" required />
         </div>
         <div class="mb-3">
             <label for="inputAdminPassword" class="form-label">Admin Password (optional)</label>
             <input type="text" id="inputAdminPassword" />
         </div>
-        <button type="submit" onclick="mySubmit(this)" class="btn btn-primary">Register</button>
+        <button type="submit" class="btn btn-primary">Register</button>
     </form>
 
 </body>

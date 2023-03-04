@@ -1,0 +1,81 @@
+{% macro toolbar() %}
+<script>
+    function insertAtCursor(myValue) {
+        var myField = document.getElementById('articleText')
+        //IE support
+        if (document.selection) {
+            myField.focus();
+            sel = document.selection.createRange();
+            sel.text = myValue;
+        }
+        //MOZILLA and others
+        else if (myField.selectionStart || myField.selectionStart == '0') {
+            var startPos = myField.selectionStart;
+            var endPos = myField.selectionEnd;
+            myField.value = myField.value.substring(0, startPos)
+                + myValue
+                + myField.value.substring(endPos, myField.value.length);
+        } else {
+            myField.value += myValue;
+        }
+    };
+    function promptLink() {
+
+        var text = "[";
+        text += window.prompt("Enter link display text:");
+        text += "](";
+        if (confirm("linking to Minecraft server wiki article?")) {
+            text += "/page/";
+            text += window.prompt("Page Id:");
+
+        } else {
+            text += window.prompt("External link url:");
+
+        }
+        text += ")";
+        insertAtCursor(text);
+    };
+
+    function promptImage() {
+        var text = "![";
+        text += window.prompt("Image alt text:");
+        text += "](";
+        if (confirm("linking to Minecraft server wiki image?")) {
+
+            text += "/static/images/" + window.prompt("image name:");
+        } else {
+            text += window.prompt("image url:");
+        }
+
+        if (confirm("Image has a title?")) {
+            text += " \"" + window.prompt("Image title:") + "\"";
+        }
+        text += ")";
+        insertAtCursor(text);
+    };
+
+</script>
+<nav class="navbar bg-light">
+    <div class="container-fluid justify-content-start">
+        <button class="btn btn-sm btn-outline-dark" type="button" onclick="insertAtCursor('## ')">Section Header</button>
+        <button class="btn btn-sm btn-outline-dark" type="button" onclick="insertAtCursor('### ')">Subsection Header</button>
+        <button class="btn btn-sm btn-outline-dark" type="button" onclick="insertAtCursor('#### ')">Subsubsection Header</button>
+        <button class="btn btn-sm btn-outline-dark" type="button" onclick="insertAtCursor('##### ')">Subsubsubsection Header</button>
+        <button class="btn btn-sm btn-outline-dark" type="button" onclick="insertAtCursor('> ')">block quote</button>
+        <button class="btn btn-sm btn-outline-dark" type="button" onclick="insertAtCursor('-   ')">list item</button>
+        <button class="btn btn-sm btn-outline-dark" type="button" onclick="insertAtCursor('<pre><code>')">Code Open</button>
+        <button class="btn btn-sm btn-outline-dark" type="button" onclick="insertAtCursor('</code></pre>')">Code Close</button>
+        <button class="btn btn-sm btn-outline-dark" type="button" onclick="insertAtCursor('---------------------------------------')">Horizontal line</button>
+        <button class="btn btn-sm btn-outline-dark" type="button" onclick="promptLink()">Link</button>
+        <button class="btn btn-sm btn-outline-dark" type="button" onclick="promptImage({{url_for('static', filename='images/')}})">Image</button>
+        <button class="btn btn-sm btn-outline-dark" type="button" onclick="insertAtCursor('<redact-el>')">Redact Open</button>
+        <button class="btn btn-sm btn-outline-dark" type="button" onclick="insertAtCursor('</redact-el>')">Redact Close</button>
+        
+
+
+
+
+
+    </div>
+</nav>
+{% endmacro %}

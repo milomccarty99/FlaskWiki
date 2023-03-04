@@ -9,37 +9,33 @@
 
 </head>
 <body>
-    <div id="header-placeholder"></div>
-    <div id="nav-placeholder">
-
-    </div>
-
-    <script>
-        $(function () {
-            $("#nav-placeholder").load("{{ url_for('static',filename='html/navbar.html') }}");
-        });
-        $(function () {
-            $("#header-placeholder").load("{{url_for('static', filename='html/header.html')}}");
-        });
-    </script>
+    {% from 'html/cookiebanner.html' import cookiebanner with context %}
+    {% from 'html/header.html' import header with context %}
+    {% from 'html/navbar.html' import navbar with context %}
+    {% from 'html/header.html' import header with context %}
+    {% from 'html/toolbar.html' import toolbar with context %}
+    {{header(headline)}}
+    {{navbar()}}
+    {{cookiebanner()}}
 
     <div class="editpage">
         <form method="post">
             <div class="mb-3">
                 <label for="id" class="form-label">Page ID</label>
-                <input type="text" name="id" placeholder="Page ID" {{id_readonly}} value="{{id}}" required /> <br/>
+                <input type="text" name="id" placeholder="Page ID" {{id_readonly}} value="{{id}}" required /> <br />
             </div>
             <div class="mb-3">
                 <label for="title" class="form-label">Article Title</label>
-                <input type="text" name="title" placeholder="Article Title" value="{{title}}" required /> <br/>
+                <input type="text" name="title" placeholder="Article Title" value="{{title}}" required /> <br />
             </div>
+            {{toolbar()}}
             <div class="mb-3">
                 <label for="articleText" class="form-label"></label>
-                <textarea id="articleText" name="articleText" cols="128" rows="10">{{mdtext}}</textarea> <br/>
+                <textarea id="articleText" name="articleText" cols="128" rows="10">{{mdtext}}</textarea> <br />
             </div>
             <div class="mb-3">
                 <label for="publishDatetime">Publish DateTime:</label>
-                <input type="datetime-local" name="publishDateTime" required /> <br /> <br/>
+                <input type="datetime-local" name="publishDateTime" required /> <br /> <br />
 
             </div>
 

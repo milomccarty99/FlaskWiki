@@ -17,31 +17,24 @@
     </script>
 </head>
 <body>
-    <div id="header-placeholder"></div>
-    <div id="nav-placeholder">
-
-    </div>
-    <script>
-        $(function () {
-            $("#nav-placeholder").load("{{ url_for('static',filename='html/navbar.html') }}");
-        });
-        $(function () {
-            $("#header-placeholder").load("{{url_for('static', filename='html/header.html')}}");
-        });
-        $(function () {
-            $("#navbar-adminconsole").load("{{url_for('static', filename='html/adminconsole.html')}}");
-        });
-    </script>
+    {% from 'html/cookiebanner.html' import cookiebanner with context %}
+    {% from 'html/header.html' import header with context %}
+    {% from 'html/navbar.html' import navbar with context %}
+    {% from 'html/header.html' import header with context %}
+    {{header(headline)}}
+    {{navbar()}}
+    {{cookiebanner()}}
+   
     <form method="post">
         <div class="mb-3">
             <label for="inputUsername" class="form-label">Username</label>
-            <input type="text" id="inputUsername">
+            <input type="text" id="inputUsername" name="inputUsername" required>
         </div>
         <div class="mb-3">
             <label for="inputPassword" class="form-label">Password</label>
-            <input type="password" id="inputPassword">
+            <input type="password" id="inputPassword" name="inputPassword" required>
         </div>
-        <button type="submit"  onclick="mySubmit(this)" class="btn btn-primary">Login</button>
+        <button type="submit" onclick="mySubmit(this)" class="btn btn-primary">Login</button>
     </form>
 </body>
 </html>

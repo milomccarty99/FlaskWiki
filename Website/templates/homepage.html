@@ -9,21 +9,13 @@
 
 </head>
 <body>
-    <div id="header-placeholder"></div>
-    <div id="nav-placeholder">
-
-    </div>
-    <script>
-        $(function () {
-            $("#nav-placeholder").load("{{ url_for('static',filename='html/navbar.html') }}");
-        });
-        $(function () {
-            $("#header-placeholder").load("{{url_for('static', filename='html/header.html')}}");
-        });
-        $(function () {
-            $("#navbar-adminconsole").load("{{url_for('static', filename='html/adminconsole.html')}}");
-        });
-    </script>
+    {% from 'html/cookiebanner.html' import cookiebanner with context %}
+    {% from 'html/header.html' import header with context %}
+    {% from 'html/navbar.html' import navbar with context %}
+    {% from 'html/header.html' import header with context %}
+    {{header(headline)}}
+    {{navbar()}}
+    {{cookiebanner()}}
 
     <!--Custom HTML tags run at the bottom of the page so that we can mainupulate innerHTML-->
     <script src="{{url_for('static', filename='js/customhtml.js')}}"></script>

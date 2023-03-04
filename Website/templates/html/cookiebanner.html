@@ -1,0 +1,18 @@
+{% macro cookiebanner() -%}
+{% if cookies_check() -%}
+            {# then user has already consented so no requirement for consent banner #}
+    {% else %}
+            {# show a cookie consent banner #}
+<div class="jumbotron" id="cookie-consent-container">
+    <p class="lead">We require cookies for user login</p>
+    <button class="btn btn-primary btn-lg" id="cookie-consent">I Consent to Cookies</button>
+</div>
+<script>
+    var fn = function () {
+        document.cookie = "cookie_consent=true";
+        document.getElementById('cookie-consent-container').hidden = true;
+    };
+    document.getElementById('cookie-consent').onclick = fn;
+</script>
+    {% endif %}
+{%- endmacro %}
