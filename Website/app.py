@@ -27,6 +27,19 @@ users = usercollections["users"]
 
 tags = ["burn-on-read","user-edit","contains-redacted","all-articles"]
 
+def burn_post(id):
+    post_info = wikiarticles.find_one({"_id":id})
+    if not post_info:
+        return false
+    title = post_info.get("title")
+    md = post_info.get("md")
+    tags = post_info.get("tags")
+    created = post_info.get("created")
+    edit = post_info.get("edit")
+    publish = post_info.get("publish")
+    wikiarticles.delete_one({"_id":id})
+    wikiarticles.insert_one({"_id":id,"title":title,"md":md,"tags":tags,"created":created,"edit":edit,"publish":publish,"burned":True})
+
 @app.route('/',methods=['GET','POST'])
 def home_page():
     return render_template('homepage.html')
@@ -38,47 +51,48 @@ def add_page():
         article_title = request.form.get("title")
         article_body = request.form.get("articleText")
         article_publishdatetime =  datetime.strptime(request.form.get("publishDateTime"),'%Y-%m-%dT%H:%M')
-        # to-do add tags
-        wikiarticles.insert_one({"_id": article_id, "title":article_title,"md":article_body,"created":datetime.utcnow(),"edit":datetime.utcnow(),"publish":article_publishdatetime})
-        return redirect('/page/' + article_id)
-    return render_template('add.html', id_readonly="",tags=tags,id="",title="",mdtext="Enter article info here", selected_tags=["user-edit"])
+        tags_used = request.form.getlist("tagsUsed")
+        wikiarticles.insert_one({"_id": article_id, "title":article_title,"md":article_body,"tags":tags_used,"created":datetime.utcnow(),"edit":datetime.utcnow(),"publish":article_publishdatetime, "burned":False})
+        return redirect('/content/' + article_id)
+    return render_template('add.html', id_readonly="",tags=tags,id="",title="",mdtext="Enter article info here", selected_tags=["user-edit","all-articles"])
+
+@app.route('/content/<id>', methods=['GET','POST'])
+def content_page(id):
+    return render_template('content.html',id=id)
 
 @app.route('/page/<id>', methods=['GET','POST'])
 def site_page(id):
     page_info = wikiarticles.find_one({"_id": id})
-    if not page_info:
+    if not page_info or page_info.get("burned"):
         return redirect(url_for('page_not_found'))
     title = page_info.get("title")
     mdtext = page_info.get("md")
     pagebody= markdown.markdown(mdtext)
-    # to-do add tags
-    return render_template('page.html',id=id,title=title,pagebody=pagebody, page_id=id)
+    tags_used = page_info.get("tags")
+    if "burn-on-read" in tags_used:
+        burn_post(id)
+    return render_template('page.html',id=id,title=title,pagebody=pagebody, page_id=id, tags=tags_used)
 
 @app.route('/page/edit/<id>', methods=['GET','POST'])
 def edit_site_page(id):
     page_info = wikiarticles.find_one({"_id": id})
-    if not page_info:
+    if not page_info or page_info.get("burned"):
         return redirect(url_for('page_not_found'))
     title = page_info.get("title")
     mdtext = page_info.get("md")
+    datecreated = page_info.get("created")
+    selected_tags = page_info.get("tags")
     #pagebody= markdown.markdown(mdtext)
     # to-do add tags
-    return render_template('add.html',id_readonly="readonly",tags=tags,id=id,title=title,mdtext=mdtext, selected_tags=["user-edit"])
-    
-    
-    
     if request.method == 'POST':
-
-        article_id = request.form.get("id")
-        if not (article_id == id):
-            return redirect(url_for('edit_site_page',id=id))
         article_title = request.form.get("title")
         article_body = request.form.get("articleText")
         article_publishdatetime = datetime.strptime(request.form.get("publishDateTime"), '%Y-%m-%dT%H:%M')
-        wikiarticles.delete_one({"_id":article_id})
-        wikiarticles.insert_one({"_id": article_id, "title":article_title,"md":article_body,"created":datetime.utcnow(),"edit":datetime.utcnow(),"publish":article_publishdatetime})
-
-    return "editing " + str(id)
+        tags_used = request.form.getlist("tagsUsed")
+        wikiarticles.delete_one({"_id":id})
+        wikiarticles.insert_one({"_id": id, "title":article_title,"md":article_body,"tags":tags_used,"created":datecreated,"edit":datetime.utcnow(),"publish":article_publishdatetime, "burned":False})
+        return redirect ('/content/' + id)
+    return render_template('add.html',id_readonly="readonly",tags=tags,id=id,title=title,mdtext=mdtext, selected_tags=selected_tags)
 
 @app.route('/articles', methods=['GET', 'POST'])
 def articles_page():

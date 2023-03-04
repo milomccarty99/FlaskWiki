@@ -50,7 +50,7 @@
             <div class="row mb-3 g-3">
                 <div class="col-md-4">
                     <label for="validationTagsThreshold" class="form-label">Tags</label> <br />
-                    <select class="form-select" id="validationTagsThreshold" name="tagsClearThreshold[]" multiple data-allow-clear="true" data-suggestions-threshold="0">
+                    <select class="form-select" id="tagsUsed" name="tagsUsed" multiple data-allow-clear="true" data-suggestions-threshold="0">
                         <option selected disabled hidden value="">Choose a tag...</option>
                         {%for tag in tags%}
                         {%if tag in selected_tags%}

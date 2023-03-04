@@ -6,13 +6,51 @@ body{
 }
 h1 {
     color:blueviolet;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    border-bottom: solid 5px #efefef
 }
 h2 {
-    color:blueviolet;
+    color: blueviolet;
+    padding-left: 16px;
+    margin-left: 16px;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+    border-bottom: solid 3px #efefef
 }
 h3 {
-    color:blueviolet
+    color: blueviolet;
+    padding-left: 32px;
+    margin-left: 32px;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+    border-bottom: solid 2px #efefef
 }
+h4 {
+    color: blueviolet;
+    padding-left: 64px;
+    margin-left: 64px;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+    border-bottom: solid 1px #efefef
+}
+h5 {
+    color: blueviolet;
+    padding-left: 128px;
+    margin-left: 128px;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+    border-bottom: solid 1px #efefef
+}
+h6 {
+    color: blueviolet;
+    padding-left: 256px;
+    margin-left: 256px;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+    border-bottom: solid 1px #efefef
+}
+
 label {
     display:inline-block;
     float: left;
