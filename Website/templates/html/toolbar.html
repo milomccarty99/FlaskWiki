@@ -36,13 +36,14 @@
         insertAtCursor(text);
     };
 
-    function promptImage() {
+    function promptImage(file_path) {
+        
         var text = "![";
         text += window.prompt("Image alt text:");
         text += "](";
         if (confirm("linking to Minecraft server wiki image?")) {
 
-            text += "/static/images/" + window.prompt("image name:");
+            text += file_path + window.prompt("image name:");
         } else {
             text += window.prompt("image url:");
         }
@@ -67,15 +68,10 @@
         <button class="btn btn-sm btn-outline-dark" type="button" onclick="insertAtCursor('</code></pre>')">Code Close</button>
         <button class="btn btn-sm btn-outline-dark" type="button" onclick="insertAtCursor('---------------------------------------')">Horizontal line</button>
         <button class="btn btn-sm btn-outline-dark" type="button" onclick="promptLink()">Link</button>
-        <button class="btn btn-sm btn-outline-dark" type="button" onclick="promptImage({{url_for('static', filename='images/')}})">Image</button>
+        <button class="btn btn-sm btn-outline-dark" type="button" onclick="promptImage('/static/images/')">Image</button>
+
         <button class="btn btn-sm btn-outline-dark" type="button" onclick="insertAtCursor('<redact-el>')">Redact Open</button>
         <button class="btn btn-sm btn-outline-dark" type="button" onclick="insertAtCursor('</redact-el>')">Redact Close</button>
-        
-
-
-
-
-
     </div>
 </nav>
 {% endmacro %}

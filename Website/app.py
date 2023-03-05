@@ -17,7 +17,7 @@ from werkzeug.utils import secure_filename
 import constants
 
 app = flask.Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'static/images'
+app.config['UPLOAD_FOLDER'] = sys.path[0] + '/static/images/'
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_TYPE'] = "filesystem"
 
@@ -31,7 +31,8 @@ usercollections = mongoclient["usercollections"]
 users = usercollections["users"]
 
 tags = ["burn-on-read","user-edit","contains-redacted","all-articles"]
-headline = "Ian, check your messages"
+headline = "everyday, i'm mining"
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 
 
 def burn_post(id):
@@ -46,6 +47,20 @@ def burn_post(id):
     publish = post_info.get("publish")
     wikiarticles.delete_one({"_id":id})
     wikiarticles.insert_one({"_id":id,"title":title,"md":md,"tags":tags,"created":created,"edit":edit,"publish":publish,"burned":True})
+    return True
+
+def allowed_file(filename):
+    return '.' in filename and \
+        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def is_loggedin():
+    loggedout = not session['username']
+    return not loggedout
+
+def is_admin_loggedin():
+    username = session['username']
+    userdetails = users.find_one({'username': username})
+    return userdetails.get("admin")
 
 @app.context_processor
 def inject_template_scope():
@@ -75,6 +90,24 @@ def add_page():
         wikiarticles.insert_one({"_id": article_id, "title":article_title,"md":article_body,"tags":tags_used,"created":datetime.utcnow(),"edit":datetime.utcnow(),"publish":article_publishdatetime, "burned":False})
         return redirect('/content/' + article_id)
     return render_template('add.html', id_readonly="",tags=tags,id="",title="",mdtext="Enter article info here", selected_tags=["user-edit","all-articles"], headline=headline)
+
+@app.route('/imageupload', methods=['GET','POST'])
+def image_upload_page():
+    if request.method == 'POST':
+        if 'file' not in  request.files:
+            flash('No file part')
+            return redirect(request.url)
+        file = request.files['file']
+        # If the user does not select a file, the browser submits an
+        # empty file without a filename
+        if file.filename == '':
+            flash('No selected file')
+            return redirect(request.url)
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            return redirect(url_for('home_page'))#url_for('static', filename=('images/' + filename)))
+    return render_template('imageupload.html', headline=headline)
 
 @app.route('/content/<id>', methods=['GET','POST'])
 def content_page(id):
@@ -143,7 +176,16 @@ def users_page():
 def login_page():
     if request.method == 'POST':
         # record the username
-        session["username"] = request.form.get("inputUsername")
+        username = request.form.get("inputUsername")
+        userdetails = users.find_one({"username":username})
+        hash_pass = request.form.get("inputPassword")
+        if not userdetails or not userdetails.get("password") == hash_pass:
+            return redirect(url_for("login_page"))
+        else :
+            session["username"] = username
+            users.update_one(
+                {"username":username},
+                {"$set": {"lastlogin":datetime.utcnow()}})
         return redirect(url_for('home_page'))
 
     return render_template('session/login.html', headline=headline)
@@ -151,7 +193,13 @@ def login_page():
 @app.route('/register', methods=['GET','POST'])
 def register_page():
     if request.method == 'POST':
-        pass
+        username = request.form.get("inputUsername")
+        email = request.form.get("inputEmail")
+        password = request.form.get("inputPassword")
+        adminpassword = request.form.get("inputAdminPassword")
+        is_admin = adminpassword == "butts"
+        users.insert_one({"username":username,"email":email,"password":password,"is_admin": is_admin,"created":datetime.utcnow(),"lastlogin":datetime.utcnow(),"lastprofilechange":datetime.utcnow()})
+        return redirect(url_for('login_page'))
     return render_template('session/register.html', headline=headline)
 
 @app.route('/logout', methods=['GET','POST'])

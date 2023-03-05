@@ -8,22 +8,19 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 
     <link rel="stylesheet" href="{{url_for('static',filename='css/main.css')}}" />
+
 </head>
 <body>
     {% from 'html/cookiebanner.html' import cookiebanner with context %}
     {% from 'html/header.html' import header with context %}
     {% from 'html/navbar.html' import navbar with context %}
     {% from 'html/header.html' import header with context %}
+    {% from  '/html/uploadimage.html' import uploadimage with context %}
     {{header(headline)}}
     {{navbar()}}
     {{cookiebanner()}}
 
-    <h2>All Articles</h2>
-    <p>Here is a list of all of the site's articles</p>
-    {%for article in articles%}
-    <a href="/page/{{article.get('_id')}}">{{article.get('_id')}}</a> </br>
-    {% endfor %}
-
+    {{uploadimage()}}
     <!--Custom HTML tags run at the bottom of the page so that we can mainupulate innerHTML-->
     <script src="{{url_for('static', filename='js/customhtml.js')}}"></script>
 </body>
