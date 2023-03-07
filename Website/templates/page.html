@@ -15,6 +15,7 @@
     {% from 'html/header.html' import header with context %}
     {% from 'html/navbar.html' import navbar with context %}
     {% from 'html/header.html' import header with context %}
+    {% from 'html/article.html' import displayarticle with context %}
     {{header(headline)}}
     {{navbar()}}
     {{cookiebanner()}}
@@ -22,7 +23,7 @@
     <p><a href="/page/edit/{{page_id}}"> edit</a></p>
     <div>
         <h1>{{title}}</h1>
-        {{pagebody | safe}}
+        {{displayarticle(pagebody)}}
     </div>
 
 

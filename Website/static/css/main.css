@@ -1,54 +1,73 @@
+:root {
+    --color1: #E63946;
+    --color2: #F1FAEE;
+    --color3: #A8DADC;
+    --color4: #457B9D;
+    --color5: #1D3557;
+
+    
+    
+}
+@media (prefers-color-scheme: dark) {
+    --color1: #E63946;
+    --color2: #1D3557;
+    --color3: #457B9D;
+    --color4: #A8DADC;
+    --color5: #F1FAEE;
+}
+
 body{
     margin: 0;
     padding: 0;
     font-family: Consolas;
-    color: #444;
+    color: var(--color5);
+    background-color: var(--color2);
 }
 h1 {
-    color:blueviolet;
+    color: var(--color5);
     padding-bottom: 8px;
     margin-bottom: 8px;
-    border-bottom: solid 5px #efefef
+    border-bottom: solid 5px var(--color4);
 }
 h2 {
-    color: blueviolet;
+    color: var(--color5);
     padding-left: 16px;
     margin-left: 16px;
     padding-bottom: 4px;
     margin-bottom: 4px;
-    border-bottom: solid 3px #efefef
+    border-bottom: solid 3px var(--color4);
 }
 h3 {
-    color: blueviolet;
+    color: var(--color5);
     padding-left: 32px;
     margin-left: 32px;
     padding-bottom: 4px;
     margin-bottom: 4px;
-    border-bottom: solid 2px #efefef
+    border-bottom: solid 2px var(--color4);
 }
 h4 {
-    color: blueviolet;
+    color: var(--color5);
     padding-left: 64px;
     margin-left: 64px;
     padding-bottom: 4px;
     margin-bottom: 4px;
-    border-bottom: solid 1px #efefef
+    border-bottom: solid 1px var(--color4);
 }
 h5 {
-    color: blueviolet;
+    color: var(--color5);
     padding-left: 128px;
     margin-left: 128px;
     padding-bottom: 4px;
     margin-bottom: 4px;
-    border-bottom: solid 1px #efefef
+    border-bottom: solid 1px var(--color4);
 }
 h6 {
-    color: blueviolet;
+    color: var(--color5);
     padding-left: 256px;
     margin-left: 256px;
     padding-bottom: 4px;
     margin-bottom: 4px;
-    border-bottom: solid 1px #efefef
+    border-bottom: solid 1px var(--color4);
 }
 
 label {
@@ -77,10 +96,30 @@ button {
 }
 blockquote{
     margin-left: 12px;
-    background-color: chartreuse;
+    background-color: var(--color1);
 }
 img {
     display: inline-block;
     margin-left: 12px;
     padding-left: 12px;
+}
+
+.navbar-custom {
+    background-color: var(--color1);
+}
+.nightmode-toggler {
+    
+    background-color: var(--color2);
+   display: inline-block;
+}
+.nightmode-image {
+    width: 25%;
+    height: 25%;
+}
+.dark-mode {
+    --color1: #E63946;
+    --color2: #1D3557;
+    --color3: #457B9D;
+    --color4: #A8DADC;
+    --color5: #F1FAEE;
 }

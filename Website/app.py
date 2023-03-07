@@ -33,6 +33,7 @@ users = usercollections["users"]
 tags = ["burn-on-read","user-edit","contains-redacted","all-articles"]
 headline = "everyday, i'm mining"
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+CLEANR = re.compile('<redact-el>.*?</redact-el>')
 
 
 def burn_post(id):
@@ -48,6 +49,15 @@ def burn_post(id):
     wikiarticles.delete_one({"_id":id})
     wikiarticles.insert_one({"_id":id,"title":title,"md":md,"tags":tags,"created":created,"edit":edit,"publish":publish,"burned":True})
     return True
+
+def remove_redactel(pagebody):
+    cleantext = re.sub(CLEANR,'&#9608&#9608&#9608&#9608&#9608&#9608&#9608&#9608&#9608&#9608&#9608&#9608&#9608&#9608&#9608&#9608&#9608&#9608' + \
+        "&#9608&#9608&#9608&#9608&#9608&#9608&#9608&#9608&#9608&#9608&#9608&#9608&#9608&#9608&#9608&#9608&#9608&#9608&#9608&#9608", pagebody)
+    
+    #pos1 = pagebody.fine('<redact-el>')
+    
+    return cleantext
+
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -120,7 +130,8 @@ def site_page(id):
         return redirect(url_for('page_not_found'))
     title = page_info.get("title")
     mdtext = page_info.get("md")
-    pagebody= markdown.markdown(mdtext)
+    pagebody= remove_redactel(markdown.markdown(mdtext))
+    
     tags_used = page_info.get("tags")
     if "burn-on-read" in tags_used:
         burn_post(id)
