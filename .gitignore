@@ -401,5 +401,9 @@ FodyWeavers.xsd
 Data/
 Data/*
 
+# Site images
+Website/static/images/
+Website/static/images/*
+
 # Constants
 Website/constants.py

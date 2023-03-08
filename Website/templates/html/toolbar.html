@@ -1,7 +1,7 @@
-{% macro toolbar() %}
+{% macro toolbar(fieldID) %}
 <script>
     function insertAtCursor(myValue) {
-        var myField = document.getElementById('articleText')
+        var myField = document.getElementById("{{fieldID}}")
         //IE support
         if (document.selection) {
             myField.focus();

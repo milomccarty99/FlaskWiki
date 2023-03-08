@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsSHA/2.0.2/sha.js"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" href="{{url_for('static',filename='css/main.css')}}" />
+
+</head>
+<body>
+    {% from 'html/cookiebanner.html' import cookiebanner with context %}
+    {% from 'html/header.html' import header with context %}
+    {% from 'html/navbar.html' import navbar with context %}
+    {% from 'html/header.html' import header with context %}
+    {% from 'html/toolbar.html' import toolbar with context %}
+    {% from  'html/uploadimage.html' import uploadimage with context %}
+
+    {{header(headline)}}
+    {{navbar()}}
+    {{cookiebanner()}}
+
+    <div class="editpage">
+        <form method="post" enctype='multipart/form-data'>
+            <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" name="username" placeholder="Username" readonly value="{{username}}" required /> <br />
+            </div>
+            <div class="mb-3">
+                <label for="file" class="form-label">Profile Pic</label>
+                <input type="file" id="file" name="file" accept="image/*" value="{{profilepic}}"/>
+
+            </div>
+            <br />
+            <br />
+            {{toolbar("bio")}}
+            <div class="mb-3">
+                <label for="bio" class="form-label"></label>
+                <textarea id="bio" name="bio" cols="128" rows="10" required>{{bio}}</textarea> <br />
+            </div>
+
+
+
+            <br /><br /><br />
+            <input type="submit" value="Create/Update Page!" />
+        </form>
+    </div>
+</body>
+</html>

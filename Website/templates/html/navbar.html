@@ -13,14 +13,9 @@
                         Navigation
                     </a>
                     <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink">
-                        <li><a class="dropdown-item" href="/">Home Page</a></li>
-                        <li><a class="dropdown-item" href="/random">Random Article</a></li>
-                        <li><a class="dropdown-item" href="/articles">Article List </a></li>
-                        <li><a class="dropdown-item" href="/add">Add an Article</a></li>
-                        <li><a class="dropdown-item" href="/imageupload">Upload an Image</a></li>
-                        <li><a class="dropdown-item" href="/login">Login</a></li>
-                        <li><a class="dropdown-item" href="/register">Register</a></li>
-                        <li><a class="dropdown-item" href="/logout">Logout</a></li>
+                        {%for route in get_routes() %}
+                        <li><a class="dropdown-item" {{route[2]}} href="{{route[0]}}">{{route[1]}}</a></li>
+                        {%endfor%}
                     </ul>
                 </li>
             </ul>
