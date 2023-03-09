@@ -39,3 +39,11 @@ class Redact extends HTMLElement {
 
 customElements.define("redact-el", Redact);
 
+const headers = ["h1", "h2", "h3", "h4", "h5", "h6"];
+for (const element of headers) {
+    var tags = document.getElementsByTagName(element);
+    for (var i = 0; i < tags.length; i++) {
+        let h = tags[i];
+        h.id = h.innerHTML.toLowerCase().replace(" ", "-");
+    }
+}

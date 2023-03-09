@@ -8,43 +8,48 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 
     <link rel="stylesheet" href="{{url_for('static',filename='css/main.css')}}" />
-    
+
 </head>
 <body>
     {% from 'html/cookiebanner.html' import cookiebanner with context %}
     {% from 'html/header.html' import header with context %}
     {% from 'html/navbar.html' import navbar with context %}
     {% from 'html/header.html' import header with context %}
-    {% from 'html/article.html' import displayarticle with context %}
     {{header(headline)}}
     {{navbar()}}
     {{cookiebanner()}}
+    <img src="{{unauditedimage.get('path').replace("FlaskWiki/Website/", "")}}" />
+    <br />
+    {% for attribute in unauditedimage %}
+    <p>
+       <b>{{attribute}}:</b>
+        {{unauditedimage.get(attribute)}}
+        <br />
+    </p>
+    {% endfor %}
+    <form method="post">
+        <div class="md-3">
+            <fieldset>
+                <legend>Select an action for this image:</legend>
+                <div>
+                    <input type="radio" id="release" name="action" value="release" checked />
+                    <p for="release">release</p>
+                </div>
+                <div>
+                    <input type="radio" id="delete" name="action" value="delete" />
+                    <p for="delete">delete</p>
+                </div>
+                <div>
+                    <input type="radio" id="quarantine" name="action" value="quarantine" />
+                    <p for="quarantine">quarantine</p>
+                </div>
 
-    <div>
-        <h1>
-            {{username}}
-            {% if admin_status %}
-            | admin
-            {% endif %}
-        </h1>
-        {% if is_user_viewing or is_admin_viewing %}
-        <a href="/profile/edit/{{username}}" >edit profile</a> <br /><br />
-        {% endif %}
-        <div class="profilepic-container">
-            <img src="{{url_for('static', filename='images/profiles/' + username + '/' +profilepic)}}" alt="{{username}} Avatar" width="256" height="256" class="profilepic" />
+            </fieldset>
+            <label for="radioselect"
         </div>
-        {{displayarticle(pagebody)}}
-        {{bio | safe}}
-
-        <p>Last login: {{lastlogin.astimezone(timezone('US/Pacific'))}} (PDT)</p> 
-        <p>Member since: {{date_created.astimezone(timezone('US/Pacific'))}} (PDT)</p>
-        
-    </div>
-
-
-
+        <button type="submit">Update!</button>
+    </form>
     <!--Custom HTML tags run at the bottom of the page so that we can mainupulate innerHTML-->
     <script src="{{url_for('static', filename='js/customhtml.js')}}"></script>
-
 </body>
 </html>

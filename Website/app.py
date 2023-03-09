@@ -3,13 +3,18 @@ from flask import Flask, render_template, request, url_for, redirect, jsonify, f
 from flask_session import Session
 from flask_bootstrap import Bootstrap5
 from pymongo import MongoClient
+import pymongo
 import requests
 from datetime import datetime 
+from pytz import timezone
+import pytz
 import markdown
 import sys
 import os.path
 import pathlib
+import shutil
 import json
+from bson.objectid import ObjectId
 import re
 import secrets
 import random 
@@ -18,8 +23,11 @@ from werkzeug.utils import secure_filename
 import constants
 
 app = flask.Flask(__name__)
-app.config['UPLOAD_FOLDER'] = sys.path[0] + '/static/images/'
+app.config['UPLOAD_FOLDER'] = sys.path[0] + '/static/images/'            
+pathlib.Path(app.config['UPLOAD_FOLDER']).mkdir(exist_ok=True) #creates images folder if it does not exist
 app.config['PROFILE_FOLDER'] = sys.path[0] + '/static/images/profiles/'
+pathlib.Path(app.config['PROFILE_FOLDER']).mkdir(exist_ok=True) #creates username folder if it does not exist
+
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_TYPE'] = "filesystem"
 
@@ -32,15 +40,19 @@ wikiarticles = pagecollections["wikiarticles"]
 usercollections = mongoclient["usercollections"]
 users = usercollections["users"]
 commentcollections = mongoclient['commentcollections']
+allcomments = commentcollections['comments']
+auditcollections = mongoclient['auditcollections']
+imageaudit = auditcollections['imageaudit']
 
 tags = ["burn-on-read","user-edit","contains-redacted","all-articles"]
-headline = "Introduce it in Act I"
+headline = "Your profile pictures will need admin approval"
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 CLEANR = re.compile('<redact-el>.*?</redact-el>')
 links = [("/","Home Page",""),("/random","Random Article",""),
          ("/articles","Article List",""),("/add","Add an Article",""),
          ("/imageupload","Upload an Image",""),("/login","Login",""),
-         ("/register","Register",""),("/logout","Logout",""),("/profile/edit","Edit Profile","")]
+         ("/register","Register",""),("/logout","Logout",""),("/profile/edit","Edit Profile",""),
+         ("/audit/images", "Audit images", "")]
 
 def burn_post(id):
     post_info = wikiarticles.find_one({"_id":id})
@@ -89,15 +101,14 @@ def inject_template_scope():
         return value == 'true' # no boolean zen
     def get_routes():
         return get_routes_loggedin()
-    injections.update(cookies_check=cookies_check,get_routes=get_routes,headline=headline)
+    injections.update(cookies_check=cookies_check,get_routes=get_routes,headline=headline, timezone=timezone, markdown=markdown)
     
     return injections
 
 @app.route('/',methods=['GET','POST'])
 def home_page():
-    if not session.get("username"):
-        return redirect("/login")
-    return render_template('homepage.html', headline=headline)
+    
+    return render_template('homepage.html')
 
 @app.route('/add', methods=['GET', 'POST'])
 def add_page():
@@ -115,7 +126,7 @@ def add_page():
 
 @app.route('/imageupload', methods=['GET','POST'])
 def image_upload_page():
-    if not is_admin_loggedin():
+    if not session['username']:
         return redirect(url_for('home_page'))
     if request.method == 'POST':
         if 'file' not in  request.files:
@@ -129,9 +140,63 @@ def image_upload_page():
             return redirect(request.url)
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            filepathq = app.config['UPLOAD_FOLDER'] + 'quarantine/'
+            pathlib.Path(app.config['UPLOAD_FOLDER']).mkdir(exist_ok=True)
+            pathlib.Path(filepathq).mkdir(exist_ok=True)
+            filepath = os.path.join(filepathq, filename)
+            if not imageaudit.find_one({'path':filepath}):
+                imageaudit.insert_one({'filename':filename,'uploaded_by':session['username'],'path':filepath,'comment':"",'dateuploaded':datetime.utcnow(),'datereleased':None,'quarantined':True, 'audited':False})
+            else:
+                imageaudit.update_one({'path':filepath}, {"$set":{'uploaded_by':session['username'],'comment':"reuploaded. ",'dateuploaded':datetime.utcnow(),'datereleased':None,'audited':False}})
+            file.save(filepath)
             return redirect(url_for('home_page'))#url_for('static', filename=('images/' + filename)))
     return render_template('imageupload.html')
+
+@app.route('/audit/images', methods=['GET','POST'])
+def audit_images():
+    if not is_admin_loggedin():
+        return redirect(url_for('home_page'))
+    unauditedimages = imageaudit.find({'audited':False})
+    return render_template('audit/imagelist.html', unauditedimages=unauditedimages)
+
+@app.route('/audit/images/<id>', methods=['GET','POST'])
+def audit_image(id):
+    if not is_admin_loggedin():
+        return redirect(url_for('home_page'))
+    unauditedimage = imageaudit.find_one({'_id': ObjectId(id)})
+    if not unauditedimage:
+        return redirect(url_for('home_page'))
+    comment = unauditedimage.get('comment')
+    if request.method =='POST':
+        action = request.form.get('action')
+        if action == 'release' and unauditedimage.get("quarantined"):
+            filepath = unauditedimage.get('path')
+            newfilepath = filepath.replace('quarantine/', "")
+            if not imageaudit.find_one({'path':newfilepath}): # not replacing a new image
+                imageaudit.update_one({'_id':ObjectId(id)},{"$set":
+                                                            {'path': newfilepath,
+                                                            'comment': comment + "  released by " + session['username'] + ".",
+                                                            'datereleased': datetime.utcnow(),
+                                                            'audited': True,
+                                                            'quarantined': False}})
+            else: # is replacing released image
+                imageaudit.update_one({'path': newfilepath}, {"$set":
+                                                              {'comment': comment + " released by " + session['username'] + ". File overwritten.",
+                                                               'audited': True,
+                                                               'quarantined':False,
+                                                               'datereleased': datetime.utcnow()}})
+                imageaudit.delete_one({'_id': ObjectId(id)})
+            shutil.move(filepath, newfilepath)
+        elif action == 'delete':
+            imageaudit.delete_one({'_id':ObjectId(id)})
+            if os.path.isfile(unauditedimage.get('path')):
+                os.remove(unauditedimage.get('path'))
+        elif action == 'quarantine' and not unauditedimage.get("quarantined"):
+            pass
+        else:
+            pass
+        return redirect(url_for('audit_images'))
+    return render_template('audit/imageaudit.html',unauditedimage=unauditedimage)
 
 @app.route('/content/<id>', methods=['GET','POST'])
 def content_page(id):
@@ -145,11 +210,20 @@ def site_page(id):
     title = page_info.get("title")
     mdtext = page_info.get("md")
     pagebody= remove_redactel(markdown.markdown(mdtext))
-    
+    lastedit = page_info.get("edit")
+    publish = page_info.get("publish")
+    if publish > datetime.utcnow() and not is_admin_loggedin():
+        return redirect(url_for('home_page'))
+    edited_by = page_info.get('edited_by')
+    comments = allcomments.find({'post_id':id}).sort('date',pymongo.ASCENDING) # ASCENDING for oldest comments first
     tags_used = page_info.get("tags")
     if "burn-on-read" in tags_used:
         burn_post(id)
-    return render_template('page.html',id=id,title=title,pagebody=pagebody, page_id=id, tags=tags_used)
+    if request.method == 'POST' and session['username']:
+        comment = request.form.get('comment')
+        allcomments.insert_one({'post_id':id,'username': session['username'], 'comment':comment,'date':datetime.utcnow(), 'audited': False})
+        return redirect('/page/' + id)
+    return render_template('page.html',id=id,title=title,pagebody=pagebody, page_id=id, tags=tags_used, lastedit=lastedit, edited_by=edited_by, comments=comments, users=users)
 
 @app.route('/page/edit/<id>', methods=['GET','POST'])
 def edit_site_page(id):
@@ -170,7 +244,7 @@ def edit_site_page(id):
         article_body = request.form.get("articleText")
         article_publishdatetime = datetime.strptime(request.form.get("publishDateTime"), '%Y-%m-%dT%H:%M')
         tags_used = request.form.getlist("tagsUsed")
-        if not session['username'] or session['username'] not in edited_by:
+        if session['username'] not in edited_by:
             edited_by.append(session['username'])
         wikiarticles.delete_one({"_id":id})
         wikiarticles.insert_one({"_id": id, "title":article_title,"md":article_body,"tags":tags_used,"created":datecreated,"edit":datetime.utcnow(),"publish":article_publishdatetime, "edited_by": edited_by ,"burned":False})
@@ -180,7 +254,7 @@ def edit_site_page(id):
 @app.route('/profile/<username>', methods=['GET','POST'])
 def profile_page(username):
     if not session['username']:
-        return redirect(url_for('home_page'))
+        pass
     is_user_viewing = session['username'] == username
     is_admin_viewing = is_admin_loggedin()
     user_info = users.find_one({'username':username})
@@ -221,21 +295,25 @@ def edit_profile_page(username):
         bio = request.form.get("bio")
         if 'file' not in  request.files:
             flash('No file part')
-            return "no file part"
         else:
             file = request.files['file']
             # If the user does not select a file, the browser submits an
             # empty file without a filename
             if file.filename == '':
                 flash('No selected file')
-                return "no selected file"
             else:
                 if file and allowed_file(file.filename):
                     filename = secure_filename(file.filename)
                     profilepic = filename
+                    pathlib.Path(app.config['PROFILE_FOLDER']).mkdir(exist_ok=True) #creates username folder if it does not exist
                     pathlib.Path(app.config['PROFILE_FOLDER'],username).mkdir(exist_ok=True) #creates username folder if it does not exist
-                    file.save(os.path.join(app.config['PROFILE_FOLDER'] + username + '/', filename))
-
+                    pathlib.Path(app.config['PROFILE_FOLDER'],username + '/quarantine/').mkdir(exist_ok=True) #creates username folder if it does not exist
+                    filepath = os.path.join(app.config['PROFILE_FOLDER'] + username + '/quarantine/', filename)
+                    if not imageaudit.find_one({'path':filepath}):
+                        imageaudit.insert_one({'filename':filename,'uploaded_by':session['username'],'path':filepath,'comment': "",'dateuploaded':datetime.utcnow(),'datereleased':None,'quarantined':True, 'audited':False})
+                    else:
+                        imageaudit.update_one({'path':filepath}, {"$set":{'uploaded_by':session['username'],'comment': "reuploaded. ", 'dateuploaded':datetime.utcnow(),'datereleased':None,'audited':False}})
+                    file.save(filepath)
 
         users.update_one({'username':username},  {"$set": {"lastprofilechange":datetime.utcnow(), "bio":bio, "profilepic":profilepic}})
         return redirect('/profile/'+username)

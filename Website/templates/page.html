@@ -14,22 +14,75 @@
     {% from 'html/cookiebanner.html' import cookiebanner with context %}
     {% from 'html/header.html' import header with context %}
     {% from 'html/navbar.html' import navbar with context %}
+    {% from 'html/sidebar.html' import sidebar with context %}
     {% from 'html/header.html' import header with context %}
     {% from 'html/article.html' import displayarticle with context %}
+    {% import 'html/commentssection.html' as comments_section with context %}
     {{header(headline)}}
     {{navbar()}}
     {{cookiebanner()}}
 
-    <p><a href="/page/edit/{{page_id}}"> edit</a></p>
-    <div>
-        <h1>{{title}}</h1>
-        {{displayarticle(pagebody)}}
-    </div>
+    <div class="container-fluid">
+        <div class="row flex-nowrap">
+            <div class="col-auto col-md-3 col-xl-2 px-sm-2 px-0">
+                <div class="d-flex flex-column align-items-center align-items-sm-start px-3 pt-2 min-vh-100">
+                    <ul class="nav nav-pills flex-column mb-sm-auto mb-0 align-items-center align-items-sm-start" id="menu">
+                        <div id="sidebar-contents"></div>
+                    </ul>
+                    <hr>
 
+                </div>
+            </div>
+            <div class="col py-3">
+                <div>
+                    <h1>{{title}}</h1> <a href="/page/edit/{{page_id}}"> edit</a>
+                    {{displayarticle(pagebody)}}
+                </div>
+                <div>
+                    Last edited: {{lastedit.astimezone(timezone('US/Pacific')).strftime('%Y-%m-%d %H:%M')}}
+                    <br />
+                    <p>
+                        edited by:
+                        {% for username in edited_by %}
+                        {{username}}
+                        {% endfor %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <hr />
+    <div>
+        {{comments_section.display_comments(comments, users, timezone, markdown)}}
+        {{comments_section.comments_form()}}
+    </div>
 
 
     <!--Custom HTML tags run at the bottom of the page so that we can mainupulate innerHTML-->
     <script src="{{url_for('static', filename='js/customhtml.js')}}"></script>
+    <script>
+        try {
+            const headers = ["h1", "h2", "h3", "h4", "h5", "h6"];
+            const allheader = / h([1 - 6]).* /g;
+            //for (const element of headers) {
+            var tags = document.querySelectorAll("h1, h2, h3, h4, h5, h6");
+                for (var i = 0; i < tags.length; i++) {
+                    let h = tags[i];
+                    h.id = h.innerHTML.toLowerCase().replace(" ", "-");
+                    if (/^[A-Za-z][-A-Za-z0-9_:.]*$/.test(h.id)) {
+                        document.getElementById('sidebar-contents').innerHTML += (`<li><a href = '#` + h.id + "' class='nav-link px-0 align-middle' ><i class='fs - 4 bi - table'></i> <span class='ms-1 d-none d-sm-inline'>" + h.innerHTML + "</span ></a ></li >");
+                    } 
+                }
+            //}
+        }
+        catch (e)
+        {
+            alert(e);
+        }
+            
 
+        
+    </script>
 </body>
 </html>

@@ -1,0 +1,26 @@
+{% macro display_comments(comments, users, timezone, markdown) %}
+<h2>Comments</h2>
+{% for comment in comments %}
+<p class="comment-header">
+    <a href="/profile/{{comment.get("username")}}">
+        <div class="profilepic-comment-container">
+            <img src="{{url_for('static',filename='images/profiles/' + comment.get('username') + "/" + users.find_one({'username': comment.get('username')}).get('profilepic'))}}" width="64" height="64" class="profilepic" />
+        </div>
+        {{comment.get("username")}}
+    </a>
+</p>
+<p>{{markdown.markdown(comment.get("comment"))| safe}}</p>
+<i>{{comment.get("date").astimezone(timezone('US/Pacific')).strftime('%Y-%m-%d %H:%M') }} (Pacific Timezone)</i>
+<hr style="height:5px;color: var(--color5);"/>
+{% endfor %}
+{% endmacro %}
+
+{% macro comments_form() %}
+<form method="post">
+    <div class="mb-3">
+        <label for="comment" > Write a comment: </label>
+        <textarea id="comment" name="comment" placeholder="comment" rows="5" cols="64"></textarea> <br>
+        <button type="submit" >Post!</button>
+    </div>
+</form>
+{% endmacro %}
