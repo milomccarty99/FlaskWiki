@@ -19,7 +19,6 @@
     {{header(headline)}}
     {{navbar()}}
     {{cookiebanner()}}
-
     <div class="editpage">
         <form method="post">
             <div class="mb-3">
@@ -31,6 +30,8 @@
                 <input type="text" name="title" placeholder="Article Title" value="{{title}}" required /> <br />
             </div>
             {{toolbar("articleText")}}
+            <a href="/page/edit/upload/{{id}}">Upload image/link</a>
+
             <div class="mb-3">
                 <label for="articleText" class="form-label"></label>
                 <textarea id="articleText" name="articleText" cols="128" rows="10">{{mdtext}}</textarea> <br />

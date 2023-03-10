@@ -19,8 +19,12 @@
     {{header(headline)}}
     {{navbar()}}
     {{cookiebanner()}}
+    <br />
+    <form method="post" enctype="multipart/form-data">
 
-    {{uploadimage("")}}
+        <input multiple accept="image/*" type="file" name="file" />
+        <input type="submit" value="Upload" />
+    </form>
     <!--Custom HTML tags run at the bottom of the page so that we can mainupulate innerHTML-->
     <script src="{{url_for('static', filename='js/customhtml.js')}}"></script>
 </body>

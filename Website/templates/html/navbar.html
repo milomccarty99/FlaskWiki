@@ -22,7 +22,30 @@
         </div>
     </div>
     <div class="nightmode">
-        <img class ="nightmode-image" src="https://cdn-icons-png.flaticon.com/128/8338/8338708.png" onclick="el = document.body; el.classList.toggle('dark-mode');" />
+
+        <img class="nightmode-image" src="https://cdn-icons-png.flaticon.com/128/8338/8338708.png" onclick=" togglenightmode()" />
+
     </div>
 </nav>
+
+
+<script>
+    function togglenightmode() {
+        var nightmodestatus = document.cookie.split("; ").find((row) => row.startsWith("nightmode="))?.split("=")[1]
+        if ("false" == nightmodestatus) {
+            document.cookie = "nightmode=true";
+        }
+        else {
+            document.cookie = "nightmode=false";
+        }
+        nightmodeenable();
+    }
+    function nightmodeenable() {
+        const el = document.body
+        el.classList.toggle('dark-mode')
+    }
+    {% if nightmode_check() %}
+    nightmodeenable();
+    {% endif %}
+</script>
 {% endmacro %}

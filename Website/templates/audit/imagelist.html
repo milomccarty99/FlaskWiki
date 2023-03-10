@@ -19,7 +19,7 @@
     {{navbar()}}
     {{cookiebanner()}}
     <h1>Image audit</h1>
-    {% for uaimage in unauditedimages %}
+    {% for uaimage in imagelist %}
     <a href="/audit/images/{{uaimage.get('_id')}}">
         <img height="32" width="64" src="{{uaimage.get('path').replace("FlaskWiki/Website/", "")}}" />
         {{uaimage.get('filename')}}
