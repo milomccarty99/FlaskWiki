@@ -6,6 +6,7 @@
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavCustomDropdown" aria-controls="navbarNavDarkDropdown" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
+        <!--
         <div class="collapse navbar-collapse" id="navbarNavCustomDropdown">
             <ul class="navbar-nav">
                 <li class="nav-item dropdown">
@@ -20,6 +21,13 @@
                 </li>
             </ul>
         </div>
+            -->
+        {%for route in get_routes() %}
+        <a class="dropdown-item" href="{{route.get("route")}}">{{route.get("name")}}</a>
+        {%endfor%}  
+    </div>
+    <div class="searchbar">
+        <input type="text" class="search" onkeydown="search(this)"/>
     </div>
     <div class="nightmode">
 
@@ -30,6 +38,12 @@
 
 
 <script>
+    function search(ele) {
+        if (event.key === 'Enter') {
+            window.location.href = "/search/" + ele.value;
+        }
+    }
+
     function togglenightmode() {
         var nightmodestatus = document.cookie.split("; ").find((row) => row.startsWith("nightmode="))?.split("=")[1]
         if ("false" == nightmodestatus) {
@@ -38,7 +52,7 @@
         else {
             document.cookie = "nightmode=false";
         }
-        nightmodeenable();
+        location.reload();
     }
     function nightmodeenable() {
         const el = document.body

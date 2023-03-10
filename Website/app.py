@@ -34,6 +34,10 @@ bootsrtap = Bootstrap5(app)
 Session(app)
 
 mongoclient = MongoClient("mongodb://192.168.92.21:27017")
+consolecollections = mongoclient["consolecollections"]
+admindata = consolecollections['admindata']
+tagsdata = consolecollections['tagdata']
+linksdata = consolecollections['linksdata']
 pagecollections = mongoclient["pagecollections"]
 wikiarticles = pagecollections["wikiarticles"]
 usercollections = mongoclient["usercollections"]
@@ -44,14 +48,27 @@ auditcollections = mongoclient['auditcollections']
 imageaudit = auditcollections['imageaudit']
 
 tags = ["burn-on-read","user-edit","contains-redacted","all-articles"]
-headline = "all profile pictures will need admin approval"
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 CLEANR = re.compile('<redact-el>.*?</redact-el>')
-links = [("/","Home Page",""),("/random","Random Article",""),
-         ("/articles","Article List",""),("/add","Add an Article",""),
-         ("/imageupload","Upload an Image",""),("/login","Login",""),
-         ("/register","Register",""),("/logout","Logout",""),("/profile/edit","Edit Profile",""),
-         ("/audit/images", "Audit images", "")]
+
+def site_setup():
+    if not is_admin_loggedin():
+        return
+    else:
+        admindata.insert_one({'_id':'headline','headline':'welcome to the site wiki'})
+        admindata.insert_one({'_id':'adminpassword','password':'butts'})
+        tagsdata.insert_one({'tag':'burn-on-read', 'priority': 1,'datecreated':datetime.utcnow(),'selected':False, 'comment':""})
+        tagsdata.insert_one({'tag':'user-edit', 'priority':1,'datecreated':datetime.utcnow(), 'selected':True, 'comment':""})
+        tagsdata.insert_one({'tag':'all-articles','priority':1, 'datecreated':datetime.utcnow(),'selected':True,'comment':""})
+        linksdata.insert_one({'route':'/','name':'Home Page','priority':1,'is_section_head':False,'tag':'all'})
+        linksdata.insert_one({'route':'/random','name': 'Random Article', 'priority':2,'is_section_head':False,'tag':'all'})
+        linksdata.insert_one({'route':'/add', 'name': 'Add an Article', 'priority':3,'is_section_head': False, 'tag':'user'})
+        linksdata.insert_one({'route':'/imageupload','name':'Upload an Image', 'priority':4,'is_section_head':False, 'tag':'user'})
+        linksdata.insert_one({'route':'/login','name':'Login','priority':5,'is_section_head':False,'tag':'logged-out'})
+        linksdata.insert_one({'route':'/register', 'name':'Register','priority':6,'is_section_head':False,'tag':'logged-out'})
+        linksdata.insert_one({'route':'/logout', 'name': 'Logout','priority':5,'is_section_head':False,'tag':'user'})
+        linksdata.insert_one({'route': '/audit/images','name':'Audit Images','priority':6,'is_section_head':False,'tag':'admin'})
+        linksdata.insert_one({'route':'/audit/released/images','name':'Manage Images','priority':7, 'is_section_head':False,'tag':'admin'})
 
 def burn_post(id):
     post_info = wikiarticles.find_one({"_id":id})
@@ -83,6 +100,8 @@ def is_loggedin():
     return not loggedout
 
 def is_admin_loggedin():
+    if not 'username' in session:
+        session['username'] = None
     username = session['username']
     userdetails = users.find_one({'username': username})
     if userdetails == None:
@@ -90,7 +109,21 @@ def is_admin_loggedin():
     return userdetails.get("is_admin")
 
 def get_routes_loggedin():
-    return links
+    results = list(linksdata.find({'tag':'all'}))
+    if is_loggedin():
+        results.extend(list(linksdata.find({'tag':'user'})))
+    else:
+        results.extend(list(linksdata.find({'tag':'logged-out'})))
+    if is_admin_loggedin():
+        results.extend(list(linksdata.find({'tag':'admin'})))
+    return results
+
+def get_tags():
+    alltags = tagsdata.find()
+    result = []
+    for tag in alltags:
+        result.append(tag.get('tag'))
+    return result
 
 def is_nightmode():
     if not request.cookies.get('nightmode'):
@@ -101,7 +134,11 @@ def is_nightmode():
 @app.context_processor
 def inject_template_scope():
     injections = dict()
-
+    def get_site_headline():
+        headlinedata = admindata.find_one({'_id':'headline'})
+        if not headlinedata:
+            return "Wiki setup required"
+        return headlinedata.get("headline")
     def cookies_check():
         value = request.cookies.get('cookie_consent')
         return value == 'true' # no boolean zen
@@ -110,7 +147,7 @@ def inject_template_scope():
     def nightmode_check():
         value = request.cookies.get('nightmode')
         return value == 'true'
-    injections.update(cookies_check=cookies_check,nightmode_check=nightmode_check,get_routes=get_routes,headline=headline, timezone=timezone, markdown=markdown)
+    injections.update(cookies_check=cookies_check,nightmode_check=nightmode_check,get_routes=get_routes,headline=get_site_headline(), timezone=timezone, markdown=markdown)
     
     return injections
 
@@ -131,7 +168,7 @@ def add_page():
         tags_used = request.form.getlist("tagsUsed")
         wikiarticles.insert_one({"_id": article_id, "title":article_title,"md":article_body,"tags":tags_used,"created":datetime.utcnow(),"edit":datetime.utcnow(),"publish":article_publishdatetime,"edited_by": [session['username']], "burned":False})
         return redirect('/content/' + article_id)
-    return render_template('add.html', id_readonly="",tags=tags,id="",title="",mdtext="Enter article info here", selected_tags=["user-edit","all-articles"])
+    return render_template('add.html', id_readonly="",tags=get_tags(),id="",title="",mdtext="Enter article info here", selected_tags=["user-edit","all-articles"])
 
 @app.route('/imageupload', methods=['GET','POST'])
 def image_upload_page():
@@ -374,12 +411,24 @@ def edit_profile_page(username):
     return render_template('session/editprofile.html', username=username, profilepic=profilepic, bio=bio, faction=faction,  admin_status=admin_status, date_created=date_created, lastlogin=lastlogin)
 
 
-@app.route('/articles', methods=['GET', 'POST'])
-def articles_page():
-    allarticles = list(wikiarticles.find())
+@app.route('/search/<query>', methods=['GET','POST'])
+def search_page(query):
+    allarticles = list(wikiarticles.find({"burned":False}))
     for i in allarticles:
         if i.get("burned"):
             allarticles.remove(i)
+    results = []
+    for i in allarticles:
+        if query.lower() in i.get("md").lower():
+            results.append(i)
+        elif query.lower() in i.get("title").lower():
+            results.append(i)
+    return render_template('articlelist.html',articlelist=results)
+
+@app.route('/articles', methods=['GET', 'POST'])
+def articles_page():
+    allarticles = list(wikiarticles.find({"burned":False}))
+
     numarticles = len(allarticles)
     if numarticles <= 0:
         return "no pages are set up"
@@ -387,25 +436,12 @@ def articles_page():
 
 @app.route('/random', methods=['GET', 'POST'])
 def random_page():
-    allarticles = list(wikiarticles.find())
-    for i in allarticles:
-        if i.get("burned"):
-            allarticles.remove(i)
+    allarticles = list(wikiarticles.find({"burned":False}))
     numarticles = len(allarticles)
     articleselected = random.randrange(numarticles)
     if numarticles <= 0:
         return "no pages are set up"
     return redirect('/page/' + allarticles[articleselected].get("_id"))
-
-@app.route('/nightmode', methods=['GET','POST']) # for toggling night mode
-def nightmode_page():
-    resp = make_response('Setting the cookie') 
-    resp.set_cookie('GFG','ComputerScience Portal')
-    stang = ""
-    for x in request.cookies:
-        stang += x + ": "+ request.cookies.get(x) + "      "
-    return stang
-    return redirect('/')
 
 #to-do
 @app.route('/pagenotfound')
@@ -443,10 +479,36 @@ def register_page():
         email = request.form.get("inputEmail")
         password = request.form.get("inputPassword")
         adminpassword = request.form.get("inputAdminPassword")
-        is_admin = adminpassword == "butts"
+        is_admin = adminpassword == admindata.find_one({'_id':'adminpassword'}).get("password")
         users.insert_one({"username":username,"email":email,"password":password,"faction": "","profilepic":"", "bio": "", "is_admin": is_admin,"created":datetime.utcnow(),"lastlogin":datetime.utcnow(),"lastprofilechange":datetime.utcnow()})
         return redirect(url_for('login_page'))
     return render_template('session/register.html')
+
+@app.route('/headline', methods=['GET','POST'])
+def headline_page():
+    if not is_admin_loggedin():
+        return redirect(url_for('home_page'))
+    if request.method == 'POST':
+        newheadline = request.form.get("headline")
+        admindata.update_one({'_id':'headline'},{"$set":{'headline':newheadline}})
+    return render_template('management/setheadline.html')
+
+@app.route('/adminpassword', methods=['GET','POST'])
+def adminpassword_page():
+    if not is_admin_loggedin():
+        return redirect(url_for('home_page'))
+    passworddata = admindata.find_one({'_id':'adminpassword'})
+    if request.method == 'POST':
+        newadminpassword = request.form.get("adminpassword")
+        admindata.update_one({'_id':'adminpassword'},{"$set":{"password":newadminpassword}})
+    return render_template('management/setadminpassword.html', adminpassword=passworddata.get("password"))
+
+@app.route('/setup', methods=['GET','POST'])
+def setup_page():
+    if not admindata.find_one({'_id':'adminpassword'}):
+        site_setup()
+        return "wesite set up success"
+    return "website is already set up!"
 
 @app.route('/logout', methods=['GET','POST'])
 def logout():
