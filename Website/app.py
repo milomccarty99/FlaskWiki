@@ -19,6 +19,7 @@ import re
 import secrets
 import random 
 from werkzeug.utils import secure_filename
+#from profanity_check import predict, predict_prob
 
 import constants
 
@@ -36,8 +37,9 @@ Session(app)
 mongoclient = MongoClient("mongodb://192.168.92.21:27017")
 consolecollections = mongoclient["consolecollections"]
 admindata = consolecollections['admindata']
-tagsdata = consolecollections['tagdata']
+tagdata = consolecollections['tagdata']
 linksdata = consolecollections['linksdata']
+prioritizesearch = consolecollections['prioritizesearch']
 pagecollections = mongoclient["pagecollections"]
 wikiarticles = pagecollections["wikiarticles"]
 usercollections = mongoclient["usercollections"]
@@ -47,7 +49,7 @@ allcomments = commentcollections['comments']
 auditcollections = mongoclient['auditcollections']
 imageaudit = auditcollections['imageaudit']
 
-tags = ["burn-on-read","user-edit","contains-redacted","all-articles"]
+tags = []#["burn-on-read","user-edit","contains-redacted","all-articles"]
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 CLEANR = re.compile('<redact-el>.*?</redact-el>')
 
@@ -57,9 +59,9 @@ def site_setup():
     else:
         admindata.insert_one({'_id':'headline','headline':'welcome to the site wiki'})
         admindata.insert_one({'_id':'adminpassword','password':'butts'})
-        tagsdata.insert_one({'tag':'burn-on-read', 'priority': 1,'datecreated':datetime.utcnow(),'selected':False, 'comment':""})
-        tagsdata.insert_one({'tag':'user-edit', 'priority':1,'datecreated':datetime.utcnow(), 'selected':True, 'comment':""})
-        tagsdata.insert_one({'tag':'all-articles','priority':1, 'datecreated':datetime.utcnow(),'selected':True,'comment':""})
+        tagdata.insert_one({'tag':'burn-on-read', 'priority': 1,'datecreated':datetime.utcnow(),'selected':False, 'comment':""})
+        tagdata.insert_one({'tag':'user-edit', 'priority':1,'datecreated':datetime.utcnow(), 'selected':True, 'comment':""})
+        tagdata.insert_one({'tag':'all-articles','priority':1, 'datecreated':datetime.utcnow(),'selected':True,'comment':""})
         linksdata.insert_one({'route':'/','name':'Home Page','priority':1,'is_section_head':False,'tag':'all'})
         linksdata.insert_one({'route':'/random','name': 'Random Article', 'priority':2,'is_section_head':False,'tag':'all'})
         linksdata.insert_one({'route':'/add', 'name': 'Add an Article', 'priority':3,'is_section_head': False, 'tag':'user'})
@@ -67,9 +69,15 @@ def site_setup():
         linksdata.insert_one({'route':'/login','name':'Login','priority':5,'is_section_head':False,'tag':'logged-out'})
         linksdata.insert_one({'route':'/register', 'name':'Register','priority':6,'is_section_head':False,'tag':'logged-out'})
         linksdata.insert_one({'route':'/logout', 'name': 'Logout','priority':5,'is_section_head':False,'tag':'user'})
+        linksdata.insert_one({'route':'/adminconsole','name': 'Admin Console', 'priority':6,'is_section_head': True, 'tag':'admin-console'})
         linksdata.insert_one({'route': '/audit/images','name':'Audit Images','priority':6,'is_section_head':False,'tag':'admin'})
         linksdata.insert_one({'route':'/audit/released/images','name':'Manage Images','priority':7, 'is_section_head':False,'tag':'admin'})
-
+        linksdata.insert_one({'route':'/routelinks','name' :'Route Links','priority':6,'is_section_head':False,'tag':'admin'})
+        linksdata.insert_one({'route':'/tags','name':'Tags','priority':6,'is_section_head':False,'tag':'admin'})
+        linksdata.insert_one({'route':'/headline','name':'Headline','priority':6,'is_section_head':False,'tag':'admin'})
+        linksdata.insert_one({'route':'/adminpassword','name':'Admin Password','priority':6,'is_section_head':False,'tag':'admin'})
+        linksdata.insert_one({'route':'/modserach/proritize', 'name':'Prioritize Article','priority': 6,'is_section_head':False,'tag':'admin'})
+        linksdata.insert_one({'route':'/modsearch/seeprioritized','name':'See Prioritized','priority':6,'is_section_head':False,'tag':'admin'})
 def burn_post(id):
     post_info = wikiarticles.find_one({"_id":id})
     if not post_info:
@@ -115,11 +123,11 @@ def get_routes_loggedin():
     else:
         results.extend(list(linksdata.find({'tag':'logged-out'})))
     if is_admin_loggedin():
-        results.extend(list(linksdata.find({'tag':'admin'})))
+        results.extend(list(linksdata.find({'tag':'admin-console'})))
     return results
 
 def get_tags():
-    alltags = tagsdata.find()
+    alltags = tagdata.find()
     result = []
     for tag in alltags:
         result.append(tag.get('tag'))
@@ -252,6 +260,14 @@ def audit_image(id):
     return render_template('audit/imageaudit.html',unauditedimage=unauditedimage)
 
 
+@app.route('/adminconsole', methods=['GET','POST'])
+def admin_console_page():
+    if not is_admin_loggedin():
+        return redirect(url_for('home_page'))
+    linkroutes = list(linksdata.find({'tag':'admin'}))
+    return render_template('management/adminconsole.html', linkroutes=linkroutes)
+
+
 @app.route('/content/<id>', methods=['GET','POST'])
 def content_page(id):
     return render_template('content.html',id=id)
@@ -304,7 +320,7 @@ def edit_site_page(id):
         wikiarticles.delete_one({"_id":id})
         wikiarticles.insert_one({"_id": id, "title":article_title,"md":article_body,"tags":tags_used,"created":datecreated,"edit":datetime.utcnow(),"publish":article_publishdatetime, "edited_by": edited_by ,"burned":False})
         return redirect('/content/' + id)
-    return render_template('add.html',id_readonly="readonly",tags=tags,id=id,title=title,mdtext=mdtext, selected_tags=selected_tags)
+    return render_template('add.html',id_readonly="readonly",tags=get_tags(),id=id,title=title,mdtext=mdtext, selected_tags=selected_tags)
 
 @app.route('/page/edit/upload/<id>', methods=['GET','POST'])
 def post_upload(id):
@@ -342,6 +358,12 @@ def post_upload(id):
                 file.save(filepath)
         return redirect('/page/'+id )#url_for('static', filename=('images/' + filename))
     return render_template('audit/imagepostupload.html', id=id)
+
+@app.route('/profile', methods=['GET'])
+def redirect_profile_page():
+    if not is_loggedin():
+        return redirect(url_for('login_page'))
+    return redirect('/profile/' + session['username'])
 
 @app.route('/profile/<username>', methods=['GET','POST'])
 def profile_page(username):
@@ -414,17 +436,51 @@ def edit_profile_page(username):
 @app.route('/search/<query>', methods=['GET','POST'])
 def search_page(query):
     allarticles = list(wikiarticles.find({"burned":False}))
+    allpriority = list(prioritizesearch.find())
+    for i in allpriority:
+        if wikiarticles.find_one({'_id':i.get('_id')}).get('publish') > datetime.utcnow():
+            allpriority.remove(i)
     for i in allarticles:
-        if i.get("burned"):
+        if i.get("publish") > datetime.utcnow():
             allarticles.remove(i)
     results = []
+    for i in allpriority:
+        article = wikiarticles.find_one({'_id':i.get('_id')})
+        if query.lower() in article.get("md").lower():
+            results.append(article)
+        elif query.lower() in article.get("title").lower():
+            results.append(article)
     for i in allarticles:
         if query.lower() in i.get("md").lower():
-            results.append(i)
+            if not i in results:
+                results.append(i)
         elif query.lower() in i.get("title").lower():
-            results.append(i)
+            if not i in results:
+                results.append(i)
     return render_template('articlelist.html',articlelist=results)
 
+@app.route('/modsearch/prioritize', methods=['GET','POST'])
+def search_proritize_page():
+    if not is_admin_loggedin():
+        return redirect(url_for('home_page'))
+    allarticles = list(wikiarticles.find())
+    for i in allarticles:
+        if prioritizesearch.find_one({'_id':i.get('_id')}):
+            allarticles.remove(i)
+    if request.method == 'POST':
+        addprioritylist = []
+        for i in request.form:
+            if not prioritizesearch.find_one({'_id':i}):
+                prioritizesearch.insert_one({'_id':i,'date':datetime.utcnow()})
+        return redirect(url_for('admin_console_page'))
+    return render_template('management/prioritizearticles.html', allarticles=allarticles)
+
+@app.route('/modsearch/seeprioritized', methods=['GET','POST'])
+def search_see_prioritized_page():
+    if not is_admin_loggedin():
+        return redirect(url_for('home_page'))
+    allprioritized = list(prioritizesearch.find())
+    return render_template('management/viewprioritized.html',allprioritized=allprioritized)
 @app.route('/articles', methods=['GET', 'POST'])
 def articles_page():
     allarticles = list(wikiarticles.find({"burned":False}))
@@ -437,6 +493,9 @@ def articles_page():
 @app.route('/random', methods=['GET', 'POST'])
 def random_page():
     allarticles = list(wikiarticles.find({"burned":False}))
+    for article in allarticles:
+        if article.get("publish") > datetime.utcnow():
+            allarticles.remove(article)
     numarticles = len(allarticles)
     articleselected = random.randrange(numarticles)
     if numarticles <= 0:
@@ -491,6 +550,7 @@ def headline_page():
     if request.method == 'POST':
         newheadline = request.form.get("headline")
         admindata.update_one({'_id':'headline'},{"$set":{'headline':newheadline}})
+        return redirect(url_for('headline_page'))
     return render_template('management/setheadline.html')
 
 @app.route('/adminpassword', methods=['GET','POST'])
@@ -501,7 +561,87 @@ def adminpassword_page():
     if request.method == 'POST':
         newadminpassword = request.form.get("adminpassword")
         admindata.update_one({'_id':'adminpassword'},{"$set":{"password":newadminpassword}})
+        return redirect(url_for('adminpassword_page'))
     return render_template('management/setadminpassword.html', adminpassword=passworddata.get("password"))
+
+@app.route('/tags', methods=['GET','POST'])
+def tags_page():
+    if not is_admin_loggedin():
+        return redirect(url_for('home_page'))
+    tagslist = list(tagdata.find())
+    if request.method == 'POST':
+        tagname = request.form.get("tagname")
+        priority = int(request.form.get("priority"))
+        datecreated = datetime.utcnow()
+        selected = 'is-selected' in request.form
+        comment = request.form.get("comment")
+        if not tagdata.find_one({'tag':tagname}):
+            tagdata.insert_one({'tag':tagname,'priority':priority,'datecreated': datecreated,'selected':selected,'comment':comment})
+        else:
+            return "tag already exists"
+        return redirect(url_for('tags_page'))
+    return render_template('management/tags.html',tagslist=tagslist)
+
+@app.route('/tag/edit/<tagname>', methods=['GET','POST'])
+def tag_edit_page(tagname):
+    if not is_admin_loggedin():
+        return redirect(url_for('home_page'))
+    taginfo = tagdata.find_one({'tag':tagname})
+    if not taginfo:
+        return redirect(url_for('tags_page'))
+    return render_template('management/taginfo.html',taginfo=taginfo)
+
+@app.route('/tag/remove/<tagname>', methods=['GET','POST'])
+def tag_remove_page(tagname):
+    if not is_admin_loggedin():
+        return redirect(url_for('home_page'))
+    tagdata.delete_one({'tag':tagname})
+    return redirect(url_for('tags_page'))
+
+@app.route('/routelinks', methods=['GET','POST'])
+def routes_page():
+    if not is_admin_loggedin():
+        return redirect(url_for('home_page'))
+    links = list(linksdata.find())
+
+    
+    return render_template('management/links.html',links=links)
+
+@app.route('/routelink/edit/<id>', methods=['GET','POST'])
+def route_edit_page(id):
+    if not is_admin_loggedin():
+        return redirect(url_for('home_page'))
+    routelink = linksdata.find_one({'_id':ObjectId(id)})
+    if not routelink:
+        return redirect(url_for('routes_page'))
+    route = routelink.get("route")
+    name = routelink.get("name")
+    priority = routelink.get("priority")
+    is_section_head = routelink.get("is_section_head")
+    tag = routelink.get("tag")
+    if request.method == 'POST':
+        route = request.form.get("route")
+        name = request.form.get("name")
+        priority = request.form.get("priority")
+        is_section_head = 'is-section-head' in request.form
+        tag = request.form.get("tag")
+        linksdata.update_one({'_id':ObjectId(id)},{"$set":{"route":route,"name":name,"priority":priority,"is_section_head":is_section_head,"tag":tag}})
+        return redirect(url_for('routes_page'))
+    return render_template('management/editlink.html',id=id,route=route,name=name,priority=priority,is_section_head=is_section_head,tag=tag)
+
+@app.route('/routelink/add', methods=['GET','POST'])
+def add_route_page():
+    if not is_admin_loggedin():
+        return redirect(url_for('home_page'))
+    if request.method == 'POST':
+        route = request.form.get("route")
+        name = request.form.get("name")
+        priority = request.form.get("priority")
+        is_section_head = 'is-section-head' in request.form
+        tag = request.form.get("tag")
+        linksdata.insert_one({"route":route,"name":name,"priority":priority,"is_section_head":is_section_head,"tag":tag})
+        return redirect(url_for('routes_page'))
+    return render_template('management/editlink.html',id="New Route",route="",name="",priority=0,is_section_head=False,tag="")
 
 @app.route('/setup', methods=['GET','POST'])
 def setup_page():
