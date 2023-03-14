@@ -9,6 +9,9 @@
         {{comment.get("username")}}
     </a>
 </p>
+{% if comment.get("profanity_score") > 0.5 %}
+<p><i>This comment may contain profanity</i></p>
+{% endif %}
 <p>{{markdown.markdown(comment.get("comment"))| safe}}</p>
 <i>{{comment.get("date").astimezone(timezone('US/Pacific')).strftime('%Y-%m-%d %H:%M') }} (Pacific Timezone)</i>
 <hr style="height:5px;color: var(--color5);"/>
@@ -20,7 +23,7 @@
     <div class="mb-3">
         <label for="comment" > Write a comment: </label>
         <textarea id="comment" name="comment" placeholder="comment" rows="5" cols="64"></textarea> <br>
-        <button type="submit" >Post!</button>
+        <button style="margin-left: 150px;" type="submit" >Post!</button>
     </div>
 </form>
 {% endmacro %}

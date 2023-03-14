@@ -19,7 +19,9 @@ import re
 import secrets
 import random 
 from werkzeug.utils import secure_filename
-#from profanity_check import predict, predict_prob
+import joblib
+import sklearn.externals
+from profanity_check import predict, predict_prob
 
 import constants
 
@@ -40,6 +42,7 @@ admindata = consolecollections['admindata']
 tagdata = consolecollections['tagdata']
 linksdata = consolecollections['linksdata']
 prioritizesearch = consolecollections['prioritizesearch']
+ipdata = consolecollections['ipdata']
 pagecollections = mongoclient["pagecollections"]
 wikiarticles = pagecollections["wikiarticles"]
 usercollections = mongoclient["usercollections"]
@@ -49,7 +52,7 @@ allcomments = commentcollections['comments']
 auditcollections = mongoclient['auditcollections']
 imageaudit = auditcollections['imageaudit']
 
-tags = []#["burn-on-read","user-edit","contains-redacted","all-articles"]
+
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 CLEANR = re.compile('<redact-el>.*?</redact-el>')
 
@@ -64,8 +67,11 @@ def site_setup():
         tagdata.insert_one({'tag':'all-articles','priority':1, 'datecreated':datetime.utcnow(),'selected':True,'comment':""})
         linksdata.insert_one({'route':'/','name':'Home Page','priority':1,'is_section_head':False,'tag':'all'})
         linksdata.insert_one({'route':'/random','name': 'Random Article', 'priority':2,'is_section_head':False,'tag':'all'})
+        linksdata.insert_one({'route':'/tag/all-articles', 'name':'All Articles','priority':3,'is_section_head':True,'tag':'all'})
+        linksdata.insert_one({'route':'/tagslist', 'name':'Categories','priority':4,'is_section_head':True, 'tag':'all'})
         linksdata.insert_one({'route':'/add', 'name': 'Add an Article', 'priority':3,'is_section_head': False, 'tag':'user'})
         linksdata.insert_one({'route':'/imageupload','name':'Upload an Image', 'priority':4,'is_section_head':False, 'tag':'user'})
+        linksdata.insert_one({'route':'/page/report_bugs','name':'Report a Bug','priority':5,'is_section_head':False,'tag':'user'})
         linksdata.insert_one({'route':'/login','name':'Login','priority':5,'is_section_head':False,'tag':'logged-out'})
         linksdata.insert_one({'route':'/register', 'name':'Register','priority':6,'is_section_head':False,'tag':'logged-out'})
         linksdata.insert_one({'route':'/logout', 'name': 'Logout','priority':5,'is_section_head':False,'tag':'user'})
@@ -78,6 +84,9 @@ def site_setup():
         linksdata.insert_one({'route':'/adminpassword','name':'Admin Password','priority':6,'is_section_head':False,'tag':'admin'})
         linksdata.insert_one({'route':'/modserach/proritize', 'name':'Prioritize Article','priority': 6,'is_section_head':False,'tag':'admin'})
         linksdata.insert_one({'route':'/modsearch/seeprioritized','name':'See Prioritized','priority':6,'is_section_head':False,'tag':'admin'})
+        linksdata.insert_one({'route':'/audit/comments','name':'Audit Comments','priority':6,'is_section_head':False,'tag':'admin'})
+        linksdata.insert_one({'route':'/audit/articles','name':'Audit Articles','priority':6,'is_section_head':False,'tag':'admin'})
+
 def burn_post(id):
     post_info = wikiarticles.find_one({"_id":id})
     if not post_info:
@@ -149,6 +158,8 @@ def inject_template_scope():
         return headlinedata.get("headline")
     def cookies_check():
         value = request.cookies.get('cookie_consent')
+        if not value:
+            return False
         return value == 'true' # no boolean zen
     def get_routes():
         return get_routes_loggedin()
@@ -219,6 +230,32 @@ def audit_released_images():
         return redirect(url_for('home_page'))
     auditedimages = imageaudit.find({'audited': True })
     return render_template('audit/imagelist.html', imagelist=auditedimages)
+
+@app.route('/audit/comments', methods=['GET','POST'])
+def audit_comments_page():
+    if not is_admin_loggedin():
+        return redirect(url_for('home_page'))
+    sortedcomments = allcomments.find({"audited":False}).sort('profanity_score',pymongo.DESCENDING)
+    return render_template('audit/commentaudit.html', comments=sortedcomments)
+
+@app.route('/audit/comment/delete/<id>', methods=['GET','POST'])
+def audit_comment_delete_page(id):
+    if not is_admin_loggedin():
+        return redirect(url_for('home_page'))
+    allcomments.delete_one({'_id':ObjectId(id)})
+    return redirect(url_for('audit_comments_page'))
+
+@app.route('/audit/articles', methods=['GET','POST'])
+def audit_articles_page():
+    if not is_admin_loggedin():
+        return redirect(url_for('home_page'))
+    allarticles = list(wikiarticles.find())
+    profanityscores = []
+    for i in allarticles:
+        score = predict_prob([i.get('md')])[0]
+        profanityscores.append(score)
+
+    return render_template('audit/articleaudit.html',allarticles=allarticles, profanityscores=profanityscores)
 
 @app.route('/audit/images/<id>', methods=['GET','POST'])
 def audit_image(id):
@@ -292,7 +329,8 @@ def site_page(id):
         burn_post(id)
     if request.method == 'POST' and session['username']:
         comment = request.form.get('comment')
-        allcomments.insert_one({'post_id':id,'username': session['username'], 'comment':comment,'date':datetime.utcnow(), 'audited': False})
+        profanity_score = predict_prob([comment])[0]
+        allcomments.insert_one({'post_id':id,'username': session['username'], 'comment':comment,'profanity_score': profanity_score,'date':datetime.utcnow(), 'audited': False})
         return redirect('/page/' + id)
     return render_template('page.html',id=id,loggedin=is_loggedin(), title=title, pagebody=pagebody, page_id=id, tags=tags_used, lastedit=lastedit, edited_by=edited_by, comments=comments, users=users)
 
@@ -358,6 +396,36 @@ def post_upload(id):
                 file.save(filepath)
         return redirect('/page/'+id )#url_for('static', filename=('images/' + filename))
     return render_template('audit/imagepostupload.html', id=id)
+
+@app.route('/page/edit/addlinks/<id>', methods=['GET','POST'])
+def page_link_page(id):
+    page_info = wikiarticles.find_one({'_id':id})
+    if not page_info:
+        return redirect(url_for('home_page'))
+    if not is_loggedin():
+        return redirect('/page/'+id)
+    if request.method == 'POST':
+        edited_by = page_info.get('edited_by')
+        if session['username'] not in edited_by:
+            edited_by.append(session['username'])
+        for articlelink in request.form:
+            # not efficient use of update
+            page_info = wikiarticles.find_one({'_id':id})
+            wikiarticles.update_one({'_id':id},{"$set":{'md':page_info.get('md')+'['+ articlelink+'](/page/'+articlelink + ')  ', 'edited_by': edited_by,'edit':datetime.utcnow()}})
+        return redirect('/page/' + id)
+    allarticles = list(wikiarticles.find({'burned':False}))
+    return render_template('articlelink.html', articles=allarticles)
+
+@app.route('/tag/<tagname>', methods=['GET','POST'])
+def tag_preview_page(tagname):
+    allarticles = list(wikiarticles.find({'burned':False}).sort('date',pymongo.ASCENDING))
+    result = []
+    for i in allarticles:
+        if tagname in i.get('tags'):
+            result.append(i)
+
+    return render_template('taginfo.html', tagname=tagname, articles=result)
+
 
 @app.route('/profile', methods=['GET'])
 def redirect_profile_page():
@@ -481,6 +549,31 @@ def search_see_prioritized_page():
         return redirect(url_for('home_page'))
     allprioritized = list(prioritizesearch.find())
     return render_template('management/viewprioritized.html',allprioritized=allprioritized)
+
+@app.route('/visitormapview', methods=['GET','POST'])
+def visitor_mapview_page():
+    if not is_admin_loggedin():
+        return redirect((url_for('home_page')))
+    allipdata = list(ipdata.find())
+    rawjson = '{ "type": "FeatureCollection","features": ['
+    counter = 0
+    for i in allipdata:
+        url = "https://look-for-ip.p.rapidapi.com/" + i.get('ip')
+        headers = {
+	        "X-RapidAPI-Key": constants.iplookuptoken ,
+	        "X-RapidAPI-Host": "look-for-ip.p.rapidapi.com"
+        }
+        response = requests.request("GET", url, headers=headers).json()
+        placeholder = '{{"type": "Feature","geometry": {{"type": "Point","coordinates": [{lon}, {lat}]}},"properties": {{"title": "{name}","description": "{description}"}}}}{comma}'
+        if counter == len(allipdata) -1:
+            rawjson += placeholder.format(lon=str(response['data']["longitude"]),lat=str(response['data']["latitude"]),name=response['data']['ip'],description=str(i.get("users_associated")),comma="")
+        else:
+            rawjson += placeholder.format(lon=str(response['data']["longitude"]),lat=str(response['data']["latitude"]),name=response['data']['ip'],description=str(i.get("users_associated")),comma=",")
+    rawjson += ']}'
+   
+    return render_template('management/visitormapview.html',mapbox_access_token=constants.mapbox_access_token,longitude=0,latitude=0,mapdata=json.loads(rawjson))
+    return json.loads(rawjson)
+
 @app.route('/articles', methods=['GET', 'POST'])
 def articles_page():
     allarticles = list(wikiarticles.find({"burned":False}))
@@ -525,6 +618,15 @@ def login_page():
             session["username"] = username
             users.update_one({"username":username},
                 {"$set": {"lastlogin":datetime.utcnow()}})
+            ipaddr = request.remote_addr
+            if not ipdata.find_one({'ip':ipaddr}):
+                ipdata.insert_one({'ip':ipaddr, 'users_associated':[username], 'timesloggedin':1,'dateactive':datetime.utcnow()})
+            else:
+                ip_data_associated = ipdata.find_one({'ip':ipaddr})
+                users_associated = ip_data_associated.get('users_associated')
+                if not username in users_associated:
+                    users_associated.append(username)
+                ipdata.update_one({'ip':ipaddr},{"$set":{'users_associated':users_associated,'timesloggedin':ip_data_associated.get('timesloggedin')+1,'dateactive':datetime.utcnow()}})
         return redirect(url_for('home_page'))
 
     return render_template('session/login.html')
@@ -563,6 +665,15 @@ def adminpassword_page():
         admindata.update_one({'_id':'adminpassword'},{"$set":{"password":newadminpassword}})
         return redirect(url_for('adminpassword_page'))
     return render_template('management/setadminpassword.html', adminpassword=passworddata.get("password"))
+
+@app.route('/tagslist', methods=['GET','POST'])
+def tags_list_page():
+    #do not show burn-on-read tags
+    taglist= list(tagdata.find().sort('tag',pymongo.ASCENDING))
+    for i in taglist:
+        if i.get('tag') == 'burn-on-read':
+            taglist.remove(i)
+    return render_template('taglist.html', taglist=taglist)
 
 @app.route('/tags', methods=['GET','POST'])
 def tags_page():

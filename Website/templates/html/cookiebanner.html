@@ -3,9 +3,12 @@
             {# then user has already consented so no requirement for consent banner #}
     {% else %}
             {# show a cookie consent banner #}
-<div class="jumbotron" id="cookie-consent-container">
-    <p class="lead">We require cookies for user login</p>
+<div class="jumbotron" style="background-color:var(--color3)" id="cookie-consent-container">
+    <p class="lead">We require cookies for user login and more wiki features</p>
     <button class="btn btn-primary btn-lg" id="cookie-consent">I Consent to Cookies</button>
+    <br />
+    <br />
+    <br />
 </div>
 <script>
     var fn = function () {

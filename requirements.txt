@@ -7,4 +7,6 @@ pymongo
 requests
 markdown
 pytz
-profanity-check
+sklearn
+joblib
+alt-profanity-check

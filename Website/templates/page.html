@@ -69,7 +69,7 @@
             var tags = document.querySelectorAll("h1, h2, h3, h4, h5, h6");
                 for (var i = 0; i < tags.length; i++) {
                     let h = tags[i];
-                    h.id = h.innerHTML.toLowerCase().replace(" ", "-");
+                    h.id = h.innerHTML.toLowerCase().replaceAll(" ", "-");
                     if (/^[A-Za-z][-A-Za-z0-9_:.]*$/.test(h.id)) {
                         document.getElementById('sidebar-contents').innerHTML += (`<li><a href = '#` + h.id + "' class='nav-link px-0 align-middle' ><i class='fs - 4 bi - table'></i> <span class='ms-1 d-none d-sm-inline'>" + h.innerHTML + "</span ></a ></li >");
                     } 
