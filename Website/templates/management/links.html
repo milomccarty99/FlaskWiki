@@ -15,10 +15,12 @@
     {% from 'html/header.html' import header with context %}
     {% from 'html/navbar.html' import navbar with context %}
     {% from 'html/header.html' import header with context %}
+    {% from 'html/footer.html' import footer with context %}
+
     {{header(headline)}}
     {{navbar()}}
     {{cookiebanner()}}
-    <h1>Wiki Links:</h1> 
+    <h1>Wiki Links:</h1>
     <a href="/routelink/add">Add a routelink</a>
     <hr />
     {% for link in links %}
@@ -32,5 +34,6 @@
     {% endfor %}
     <!--Custom HTML tags run at the bottom of the page so that we can mainupulate innerHTML-->
     <script src="{{url_for('static', filename='js/customhtml.js')}}"></script>
+    {{footer()}}
 </body>
 </html>

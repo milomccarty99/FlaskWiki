@@ -62,9 +62,13 @@ def site_setup():
     else:
         admindata.insert_one({'_id':'headline','headline':'welcome to the site wiki'})
         admindata.insert_one({'_id':'adminpassword','password':'butts'})
+        admindata.insert_one({'_id':'featuredarticle','featuredarticle':'first_article'})
+        admindata.insert_one({'_id':'mcserverip','mcserverip':'type ip address here'})
         tagdata.insert_one({'tag':'burn-on-read', 'priority': 1,'datecreated':datetime.utcnow(),'selected':False, 'comment':""})
         tagdata.insert_one({'tag':'user-edit', 'priority':1,'datecreated':datetime.utcnow(), 'selected':True, 'comment':""})
         tagdata.insert_one({'tag':'all-articles','priority':1, 'datecreated':datetime.utcnow(),'selected':True,'comment':""})
+        wikiarticles.insert_one({'_id':'first_article','title':'Founding Article','md':'','tags':[],'created':datetime.utcnow(),'edit':datetime.utcnow(),'publish':datetime.utcnow(),'burned':False})
+        wikiarticles.insert_one({'_id':'leaderboard','title':'Leaderboard','md':'','tags':['all-articles'],'created':datetime.utcnow(),'edit':datetime.utcnow(),'publish':datetime.utcnow(),'burned':False})
         linksdata.insert_one({'route':'/','name':'Home Page','priority':1,'is_section_head':False,'tag':'all'})
         linksdata.insert_one({'route':'/random','name': 'Random Article', 'priority':2,'is_section_head':False,'tag':'all'})
         linksdata.insert_one({'route':'/tag/all-articles', 'name':'All Articles','priority':3,'is_section_head':True,'tag':'all'})
@@ -172,8 +176,13 @@ def inject_template_scope():
 
 @app.route('/',methods=['GET','POST'])
 def home_page():
-    
-    return render_template('homepage.html')
+    atp = admindata.find_one({'_id':'featuredarticle'}).get('featuredarticle')
+    articletopreview = wikiarticles.find_one({'_id':atp})
+    articlepagebody = remove_redactel(markdown.markdown(articletopreview.get("md")))
+    leaderboardarticle = wikiarticles.find_one({'_id':'leaderboard'})
+    leaderboard = markdown.markdown(leaderboardarticle.get("md"))
+    mcserverip = admindata.find_one({'_id':'mcserverip'}).get('mcserverip')
+    return render_template('homepage.html', articlepagebody=articlepagebody,articletitle=articletopreview.get('title'), articleid = articletopreview.get('_id'),leaderboard=leaderboard, mcserverip=mcserverip)
 
 @app.route('/add', methods=['GET', 'POST'])
 def add_page():
@@ -305,6 +314,11 @@ def admin_console_page():
     return render_template('management/adminconsole.html', linkroutes=linkroutes)
 
 
+@app.route('/servermap', methods=['GET','POST'])
+def mcserver_map_page():
+    mcserverip = admindata.find_one({'_id':'mcserverip'}).get('mcserverip')
+    return render_template('mcservermap.html', mcserverip=mcserverip)
+
 @app.route('/content/<id>', methods=['GET','POST'])
 def content_page(id):
     return render_template('content.html',id=id)
@@ -341,6 +355,8 @@ def edit_site_page(id):
     page_info = wikiarticles.find_one({"_id": id})
     if not page_info or page_info.get("burned"):
         return redirect(url_for('page_not_found'))
+    if not is_admin_loggedin() and not 'user-edit' in page_info.get('tags'):
+        return redirect('/page/' + id)
     title = page_info.get("title")
     mdtext = page_info.get("md")
     datecreated = page_info.get("created")

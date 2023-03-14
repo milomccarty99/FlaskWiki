@@ -18,6 +18,8 @@
     {% from 'html/header.html' import header with context %}
     {% from 'html/article.html' import displayarticle with context %}
     {% import 'html/commentssection.html' as comments_section with context %}
+    {% from 'html/footer.html' import footer with context %}
+
     {{header(headline)}}
     {{navbar()}}
     {{cookiebanner()}}
@@ -39,19 +41,25 @@
                     {{displayarticle(pagebody)}}
                 </div>
                 <div>
-                    Last edited: {{lastedit.astimezone(timezone('US/Pacific')).strftime('%Y-%m-%d %H:%M')}}
+                    Last edited: {{lastedit.astimezone(timezone('US/Pacific')).strftime('%Y-%m-%d %H:%M')}} <i>(Pacific time)</i>
                     <br />
                     <p>
                         edited by:
                         {% for username in edited_by %}
-                        {{username}}
+                        <a href="/profile/{{username}}">{{username}}</a>
+                        {% endfor %}
+                    </p>
+                    <p>
+                        tags:
+                        {%for tag in tags %}
+                        <a href="/tag/{{tag}}">{{tag}}</a>
                         {% endfor %}
                     </p>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <hr />
     <div>
         {{comments_section.display_comments(comments, users, timezone, markdown)}}
@@ -67,22 +75,22 @@
             const allheader = / h([1 - 6]).* /g;
             //for (const element of headers) {
             var tags = document.querySelectorAll("h1, h2, h3, h4, h5, h6");
-                for (var i = 0; i < tags.length; i++) {
-                    let h = tags[i];
-                    h.id = h.innerHTML.toLowerCase().replaceAll(" ", "-");
-                    if (/^[A-Za-z][-A-Za-z0-9_:.]*$/.test(h.id)) {
-                        document.getElementById('sidebar-contents').innerHTML += (`<li><a href = '#` + h.id + "' class='nav-link px-0 align-middle' ><i class='fs - 4 bi - table'></i> <span class='ms-1 d-none d-sm-inline'>" + h.innerHTML + "</span ></a ></li >");
-                    } 
+            for (var i = 0; i < tags.length; i++) {
+                let h = tags[i];
+                h.id = h.innerHTML.toLowerCase().replaceAll(" ", "-");
+                if (/^[A-Za-z][-A-Za-z0-9_:.]*$/.test(h.id)) {
+                    document.getElementById('sidebar-contents').innerHTML += (`<li><a href = '#` + h.id + "' class='nav-link px-0 align-middle' ><i class='fs - 4 bi - table'></i> <span class='ms-1 d-none d-sm-inline'>" + h.innerHTML + "</span ></a ></li >");
                 }
+            }
             //}
         }
-        catch (e)
-        {
+        catch (e) {
             alert(e);
         }
-            
 
-        
+
+
     </script>
+    {{footer()}}
 </body>
 </html>

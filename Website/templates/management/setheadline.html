@@ -15,17 +15,20 @@
     {% from 'html/header.html' import header with context %}
     {% from 'html/navbar.html' import navbar with context %}
     {% from 'html/header.html' import header with context %}
+    {% from 'html/footer.html' import footer with context %}
+
     {{header(headline)}}
     {{navbar()}}
     {{cookiebanner()}}
     <form method="post">
         <div class="mb-3">
             <label for="headline">headline: </label>
-            <input type="text" value="{{headline}}" name="headline" id="headline"  size="50"/>
+            <input type="text" value="{{headline}}" name="headline" id="headline" size="50" />
             <input type="submit" value="Submit" />
         </div>
     </form>
     <!--Custom HTML tags run at the bottom of the page so that we can mainupulate innerHTML-->
     <script src="{{url_for('static', filename='js/customhtml.js')}}"></script>
+    {{footer()}}
 </body>
 </html>

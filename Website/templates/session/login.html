@@ -29,11 +29,13 @@
     {% from 'html/header.html' import header with context %}
     {% from 'html/navbar.html' import navbar with context %}
     {% from 'html/header.html' import header with context %}
+    {% from 'html/footer.html' import footer with context %}
+
     {{header(headline)}}
     {{navbar()}}
     {{cookiebanner()}}
-   
-    <form method="post" >
+
+    <form method="post">
         <div class="mb-3">
             <label for="inputUsername" class="form-label">Username</label>
             <input type="text" id="inputUsername" name="inputUsername" required>
@@ -48,5 +50,6 @@
     <br />
     <br />
     <a href="/register">Register</a>
+    {{footer()}}
 </body>
 </html>

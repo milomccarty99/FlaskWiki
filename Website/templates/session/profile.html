@@ -16,6 +16,8 @@
     {% from 'html/navbar.html' import navbar with context %}
     {% from 'html/header.html' import header with context %}
     {% from 'html/article.html' import displayarticle with context %}
+    {% from 'html/footer.html' import footer with context %}
+
     {{header(headline)}}
     {{navbar()}}
     {{cookiebanner()}}
@@ -28,7 +30,7 @@
             {% endif %}
         </h1>
         {% if is_user_viewing or is_admin_viewing %}
-        <a href="/profile/edit/{{username}}" >edit profile</a> <br /><br />
+        <a href="/profile/edit/{{username}}">edit profile</a> <br /><br />
         {% endif %}
         <div class="profilepic-container">
             <img src="{{url_for('static', filename='images/profiles/' + username + '/' +profilepic)}}" alt="{{username}} Avatar" width="256" height="256" class="profilepic" />
@@ -36,15 +38,15 @@
         {{displayarticle(pagebody)}}
         {{bio | safe}}
 
-        <p>Last login: {{lastlogin.astimezone(timezone('US/Pacific'))}} (PDT)</p> 
+        <p>Last login: {{lastlogin.astimezone(timezone('US/Pacific'))}} (PDT)</p>
         <p>Member since: {{date_created.astimezone(timezone('US/Pacific'))}} (PDT)</p>
-        
+
     </div>
 
 
 
     <!--Custom HTML tags run at the bottom of the page so that we can mainupulate innerHTML-->
     <script src="{{url_for('static', filename='js/customhtml.js')}}"></script>
-
+    {{footer()}}
 </body>
 </html>

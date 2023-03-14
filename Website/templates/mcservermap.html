@@ -15,36 +15,24 @@
     {% from 'html/header.html' import header with context %}
     {% from 'html/navbar.html' import navbar with context %}
     {% from 'html/header.html' import header with context %}
+    {% from 'html/articlepreview.html' import article_preview with context %}
+    {% from 'html/article.html' import displayarticle %}
     {% from 'html/footer.html' import footer with context %}
 
     {{header(headline)}}
     {{navbar()}}
     {{cookiebanner()}}
-    <h2>Create/Edit Link</h2>
-    <p>Id: {{id}}</p>
-    <form method="post">
-        <div class="md-3">
-            <label for="route">Route:</label>
-            <input type="text" name="route" id="route" value="{{route}}" required />
-        </div>
-        <div class="md-3">
-            <label for="name">Name:</label>
-            <input type="text" name="name" id="name" value="{{name}}" required />
-        </div>
-        <div class="md-3">
-            <label for="priority">Priority:</label>
-            <input type="number" name="priority" id="priority" value="{{priority}}" required />
-        </div>
-        <div class="md-3">
-            <label for="is-section-head">Is Section Head?</label>
-            <input type="checkbox" name="is-section-head" id="is-section-head" {% if is_section_head %} checked {% endif %} />
-        </div>
-        <div class="md-3">
-            <label for="tag">Tag:</label>
-            <input type="text" name="tag" id="tag" value="{{tag}}" required />
-        </div>
-        <input type="submit" value="Submit" />
-    </form>
+   
+
+
+        <h2>Server Map </h2>
+        <iframe src="http://{{mcserverip}}:8123/" width="100%" height="1200">
+            <p>Your browser does not support iframes.</p>
+        </iframe>
+
+
+    
+    </div>
     <!--Custom HTML tags run at the bottom of the page so that we can mainupulate innerHTML-->
     <script src="{{url_for('static', filename='js/customhtml.js')}}"></script>
     {{footer()}}

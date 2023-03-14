@@ -17,6 +17,7 @@
     {% from 'html/header.html' import header with context %}
     {% from 'html/toolbar.html' import toolbar with context %}
     {% from  'html/uploadimage.html' import uploadimage with context %}
+    {% from 'html/footer.html' import footer with context %}
 
     {{header(headline)}}
     {{navbar()}}
@@ -30,7 +31,7 @@
             </div>
             <div class="mb-3">
                 <label for="file" class="form-label">Profile Pic</label>
-                <input type="file" id="file" name="file" accept="image/*" value="{{profilepic}}"/>
+                <input type="file" id="file" name="file" accept="image/*" value="{{profilepic}}" />
 
             </div>
             <br />
@@ -47,5 +48,6 @@
             <input type="submit" value="Create/Update Page!" />
         </form>
     </div>
+    {{footer()}}
 </body>
 </html>

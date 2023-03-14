@@ -15,11 +15,37 @@
     {% from 'html/header.html' import header with context %}
     {% from 'html/navbar.html' import navbar with context %}
     {% from 'html/header.html' import header with context %}
+    {% from 'html/articlepreview.html' import article_preview with context %}
+    {% from 'html/article.html' import displayarticle %}
+    {% from 'html/footer.html' import footer with context %}
+
     {{header(headline)}}
     {{navbar()}}
     {{cookiebanner()}}
-
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h2>Featured Article</h2>
+                <h3><a href="/page/{{articleid}}">{{articletitle}}</a></h3>
+                {{article_preview(articlepagebody, 1000)}}
+            </div>
+            <div class="col">
+                <h2>Leaderboard</h2>
+                {{displayarticle(leaderboard)}}
+            </div>
+        </div>
+        
+            <div class="col">
+                <h2>Server Map <a href="/servermap">link</a></h2>
+                <iframe src="http://{{mcserverip}}:8123/" width="100%" height="512">
+                    <p>Your browser does not support iframes.</p>
+                </iframe>
+            </div>
+           
+        </div>
+    </div>
     <!--Custom HTML tags run at the bottom of the page so that we can mainupulate innerHTML-->
     <script src="{{url_for('static', filename='js/customhtml.js')}}"></script>
+    {{footer()}}
 </body>
 </html>

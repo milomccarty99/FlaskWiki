@@ -1,0 +1,3 @@
+{% macro article_preview(pagebody, length) %}
+{{pagebody[0:length:1] | safe }}
+{% endmacro %}
