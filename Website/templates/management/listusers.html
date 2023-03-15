@@ -22,27 +22,12 @@
     {{header(headline)}}
     {{navbar()}}
     {{cookiebanner()}}
-    <div class="container">
-        <div class="row">
-            <div class="col">
-                <h2>Featured Article</h2>
-                <h3><a href="/page/{{articleid}}">{{articletitle}}</a></h3>
-                {{article_preview(articlepagebody, 1000)}}
-            </div>
-            <div class="col">
-                <h2>Leaderboard</h2>
-                {{displayarticle(leaderboard)}}
-            </div>
-        </div>
-
-        <div class="col">
-            <h2><a style="color: var(--color5);" href="/servermap">Server Map</a></h2>
-            <iframe src="http://{{mcserverip}}:8123/" width="100%" height="512">
-                <p>Your browser does not support iframes.</p>
-            </iframe>
-        </div>
-
-    </div>
+    {% for user in userlist %}
+    <p>username: {{user.get('username')}}  </p>
+    <p>email: {{user.get('email')}} </p>
+    <p>last login: {{user.get('lastlogin')}}</p>
+    <p>is admin: {{user.get('is_admin')}}</p>
+    {% endfor %}
     <!--Custom HTML tags run at the bottom of the page so that we can mainupulate innerHTML-->
     <script src="{{url_for('static', filename='js/customhtml.js')}}"></script>
     {{footer()}}
