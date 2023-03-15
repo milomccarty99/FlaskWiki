@@ -24,7 +24,7 @@
     <form method="post">
         {% for article in allarticles %}
         <label for="{{article.get("_id")}}">{{article.get("_id")}}</label>
-        <button onclick="window.location.href = '/page/delete/{{article.get('_id')}}" name="{ { article.get("_id") } }" id="{{article.get("_id")}}" >Delete Me</button>
+        <button onclick="window.location.href = '/page/delete/{{article.get('_id')}}'" name="{ { article.get("_id") } }" id="{{article.get("_id")}}" >Delete Me</button>
         <br />
         <br />
         <br />
