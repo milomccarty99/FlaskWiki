@@ -350,6 +350,22 @@ def site_page(id):
         return redirect('/page/' + id)
     return render_template('page.html',id=id,loggedin=is_loggedin(), title=title, pagebody=pagebody, page_id=id, tags=tags_used, lastedit=lastedit, edited_by=edited_by, comments=comments, users=users)
 
+@app.route('/page/delete/<id>', methods=['GET','POST'])
+def delete_site_page(id):
+
+    if not is_admin_loggedin():
+        return redirect(url_for('home_page'))
+    wikiarticles.delete_one({'_id':id})
+    return redirect(url_for('home_page'))
+
+@app.route('/page/delete', methods=['GET','POST'])
+def delete_site_article_page():
+    if not is_admin_loggedin():
+        return redirect(url_for('home_page'))
+    allarticles = list(wikiarticles.find())
+
+    return render_template('management/deletearticles.html',allarticles=allarticles)
+
 @app.route('/page/edit/<id>', methods=['GET','POST'])
 def edit_site_page(id):
     if not is_loggedin():
