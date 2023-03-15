@@ -352,7 +352,6 @@ def site_page(id):
 
 @app.route('/page/delete/<id>', methods=['GET','POST'])
 def delete_site_page(id):
-
     if not is_admin_loggedin():
         return redirect(url_for('home_page'))
     wikiarticles.delete_one({'_id':id})
@@ -600,7 +599,7 @@ def visitor_mapview_page():
         response = requests.request("GET", url, headers=headers).json()
         placeholder = '{{"type": "Feature","geometry": {{"type": "Point","coordinates": [{lon}, {lat}]}},"properties": {{"title": "{name}","description": "{description}"}}}}{comma}'
         if counter == len(allipdata) -1:
-            rawjson += placeholder.format(lon=str(response['data']["longitude"]),lat=str(response['data']["latitude"]),name=response['data']['ip'],description=str(i.get("users_associated")),comma="")
+            rawjson += placeholder.format(lon=str(response['data']["longitude"]),lat=str(response['data']["latitude"]),name=response['data']['ip'],description=str(i.get("users_associated")),comma=",")
         else:
             rawjson += placeholder.format(lon=str(response['data']["longitude"]),lat=str(response['data']["latitude"]),name=response['data']['ip'],description=str(i.get("users_associated")),comma=",")
     rawjson += ']}'
