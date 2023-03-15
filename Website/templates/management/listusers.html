@@ -23,10 +23,11 @@
     {{navbar()}}
     {{cookiebanner()}}
     {% for user in userlist %}
-    <p>username: {{user.get('username')}}  </p>
+    <p>username: <a href="/profile/{{user.get('username')}}">{{user.get('username')}}</a>  </p>
     <p>email: {{user.get('email')}} </p>
     <p>last login: {{user.get('lastlogin')}}</p>
     <p>is admin: {{user.get('is_admin')}}</p>
+    <hr />
     {% endfor %}
     <!--Custom HTML tags run at the bottom of the page so that we can mainupulate innerHTML-->
     <script src="{{url_for('static', filename='js/customhtml.js')}}"></script>

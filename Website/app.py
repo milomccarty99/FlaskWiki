@@ -86,6 +86,8 @@ def site_setup():
         linksdata.insert_one({'route':'/tags','name':'Tags','priority':6,'is_section_head':False,'tag':'admin'})
         linksdata.insert_one({'route':'/headline','name':'Headline','priority':6,'is_section_head':False,'tag':'admin'})
         linksdata.insert_one({'route':'/adminpassword','name':'Admin Password','priority':6,'is_section_head':False,'tag':'admin'})
+        linksdata.insert_one({'route':'/mcserverip','name':'MC Server IP','priority':6,'is_section_head':False,'tag':'admin'})
+        linksdata.insert_one({'route':'/users','name':'Users List','priority':7,'is_section_head':False,'tag':'admin'})
         linksdata.insert_one({'route':'/modserach/proritize', 'name':'Prioritize Article','priority': 6,'is_section_head':False,'tag':'admin'})
         linksdata.insert_one({'route':'/modsearch/seeprioritized','name':'See Prioritized','priority':6,'is_section_head':False,'tag':'admin'})
         linksdata.insert_one({'route':'/audit/comments','name':'Audit Comments','priority':6,'is_section_head':False,'tag':'admin'})
@@ -616,10 +618,13 @@ def random_page():
 def page_not_found():
     return "lol"
 
-#to-do
+
 @app.route('/users', methods=['GET','POST'])
 def users_page():
-    return "list users here"
+    if not is_admin_loggedin():
+        return redirect(url_for('home_page'))
+    userlist = list(users.find())
+    return render_template('management/listusers.html',userlist=userlist)
 
 @app.route('/login', methods=['GET','POST'])
 def login_page():
@@ -681,6 +686,19 @@ def adminpassword_page():
         admindata.update_one({'_id':'adminpassword'},{"$set":{"password":newadminpassword}})
         return redirect(url_for('adminpassword_page'))
     return render_template('management/setadminpassword.html', adminpassword=passworddata.get("password"))
+
+@app.route('/mcserverip', methods=['GET','POST'])
+def mcserverip_page():
+    if not is_admin_loggedin():
+        return redirect(url_for('home_page'))
+    mcserveripdata = admindata.find_one({'_id':'mcserverip'})
+    if request.method == 'POST':
+        newmcserverip = request.form.get("adminpassword")
+        admindata.update_one({'_id':'mcserverip'},{'$set':{'mcserverip':newmcserverip}})
+        return redirect(url_for('mcserverip_page'))
+    return render_template('management/setadminpassword.html', adminpassword=mcserveripdata.get('mcserverip'))
+
+
 
 @app.route('/tagslist', methods=['GET','POST'])
 def tags_list_page():
@@ -779,7 +797,6 @@ def setup_page():
 
 @app.route('/logout', methods=['GET','POST'])
 def logout():
-    #session.pop('username')
     session['username'] = None
     return redirect(url_for('home_page'))
 
