@@ -591,6 +591,7 @@ def visitor_mapview_page():
     rawjson = '{ "type": "FeatureCollection","features": ['
     counter = 0
     for i in allipdata:
+        counter +=1
         url = "https://look-for-ip.p.rapidapi.com/" + i.get('ip')
         headers = {
 	        "X-RapidAPI-Key": constants.iplookuptoken ,
@@ -598,12 +599,12 @@ def visitor_mapview_page():
         }
         response = requests.request("GET", url, headers=headers).json()
         placeholder = '{{"type": "Feature","geometry": {{"type": "Point","coordinates": [{lon}, {lat}]}},"properties": {{"title": "{name}","description": "{description}"}}}}{comma}'
-        if counter == len(allipdata) -1:
+        if counter >= len(allipdata):
             rawjson += placeholder.format(lon=str(response['data']["longitude"]),lat=str(response['data']["latitude"]),name=response['data']['ip'],description=str(i.get("users_associated")),comma="")
         else:
             rawjson += placeholder.format(lon=str(response['data']["longitude"]),lat=str(response['data']["latitude"]),name=response['data']['ip'],description=str(i.get("users_associated")),comma=",")
     rawjson += ']}'
-    return rawjson
+    #return rawjson
     return render_template('management/visitormapview.html',mapbox_access_token=constants.mapbox_access_token,longitude=0,latitude=0,mapdata=json.loads(rawjson))
     return json.loads(rawjson)
 
