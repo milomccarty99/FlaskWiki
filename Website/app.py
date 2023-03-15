@@ -57,7 +57,7 @@ ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 CLEANR = re.compile('<redact-el>.*?</redact-el>')
 
 def site_setup():
-    if not is_admin_loggedin():
+    if is_admin_loggedin():
         return
     else:
         admindata.insert_one({'_id':'headline','headline':'welcome to the site wiki'})
