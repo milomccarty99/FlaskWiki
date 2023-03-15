@@ -603,7 +603,7 @@ def visitor_mapview_page():
         else:
             rawjson += placeholder.format(lon=str(response['data']["longitude"]),lat=str(response['data']["latitude"]),name=response['data']['ip'],description=str(i.get("users_associated")),comma=",")
     rawjson += ']}'
-   
+    return rawjson
     return render_template('management/visitormapview.html',mapbox_access_token=constants.mapbox_access_token,longitude=0,latitude=0,mapdata=json.loads(rawjson))
     return json.loads(rawjson)
 
