@@ -21,7 +21,6 @@
     {{navbar()}}
     {{cookiebanner()}}
     <h1>Modify Search</h1>
-    <form method="post">
         {% for article in allarticles %}
         <label for="{{article.get("_id")}}">{{article.get("_id")}}</label>
         <button onclick="window.location.href = '/page/delete/{{article.get('_id')}}'" name="{ { article.get("_id") } }" id="{{article.get("_id")}}" >Delete Me</button>
@@ -29,8 +28,6 @@
         <br />
         <br />
         {% endfor %}
-        <input type="submit" value="Update Priority" />
-    </form>
     <!--Custom HTML tags run at the bottom of the page so that we can mainupulate innerHTML-->
     <script src="{{url_for('static', filename='js/customhtml.js')}}"></script>
     {{footer()}}
