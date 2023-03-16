@@ -16,6 +16,7 @@
     {% from 'html/navbar.html' import navbar with context %}
     {% from 'html/header.html' import header with context %}
     {% from 'html/footer.html' import footer with context %}
+    {% from 'html/articlepreview.html' import article_preview with context %}
 
     {{header(headline)}}
     {{navbar()}}
@@ -25,7 +26,7 @@
         <p>{{article.get("title")}}</p>
     </a>
     <p>id: {{article.get('_id')}}</p>
-
+    {{article_preview(article.get('md'),100)}}
 
     <hr />
     {% endfor %}
