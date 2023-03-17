@@ -22,8 +22,8 @@
     {{cookiebanner()}}
     <h2>{{tagname}}</h2>
     {%for article in articles%}
-    <a href="/page/{{article.get('_id')}}">{{article.get('title')}}</a> </br>
-    <p>{{article_preview(article.get('md'),100)}}</p>
+    <h3><a href="/page/{{article.get('_id')}}">{{article.get('title')}}</a></h3> </br>
+    <p>{{article_preview(markdown.markdown(article.get('md')),100)}}</p>
     <hr />
     {% endfor %}
     <!--Custom HTML tags run at the bottom of the page so that we can mainupulate innerHTML-->

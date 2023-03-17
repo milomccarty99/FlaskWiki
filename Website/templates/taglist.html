@@ -22,7 +22,7 @@
     {{cookiebanner()}}
     <h2>Categories</h2>
     {% for tag in taglist %}
-    <a href="/tag/{{tag.get('tag')}}">{{tag.get('tag')}}</a><br />
+    <h3><a href="/tag/{{tag.get('tag')}}">{{tag.get('tag')}}</a></h3><br />
     {% endfor %}
     <!--Custom HTML tags run at the bottom of the page so that we can mainupulate innerHTML-->
     <script src="{{url_for('static', filename='js/customhtml.js')}}"></script>

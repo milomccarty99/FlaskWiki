@@ -83,7 +83,8 @@ input {
     float: left;
 }
 textarea {
-    margin-left: 12px
+    margin-left: 12px;
+    width:85%;
 }
 select {
     margin-left: 12px;
