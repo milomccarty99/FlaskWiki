@@ -41,7 +41,7 @@
             </div>
             <div class="mb-3">
                 <label for="publishDatetime">Publish DateTime:</label>
-                <input type="datetime-local" name="publishDateTime" required /> <br /> <br />
+                <input type="datetime-local" name="publishDateTime" id="publishDateTime" required /> <br /> <br />
 
             </div>
 
@@ -70,6 +70,18 @@
             <br /><br /><br />
             <input type="submit" value="Create/Update Page!" />
         </form>
+        <script >
+            // for auto publish date time
+            window.addEventListener('load', () => {
+                var now = new Date();
+                now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                // remove millisecond and second if needed
+                now.setMilliseconds(null);
+                now.setSeconds(null);
+
+                document.getElementById('publishDateTime').value = now.toISOString().slice(0, -1);
+            });
+        </script>
     </div>
     {{footer()}}
 </body>
