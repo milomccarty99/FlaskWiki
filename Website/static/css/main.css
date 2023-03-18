@@ -104,6 +104,9 @@ img {
     margin-left: 12px;
     padding-left: 12px;
 }
+p {
+    text-indent: 32px;
+}
 body {
     margin-bottom:128px;
 }
