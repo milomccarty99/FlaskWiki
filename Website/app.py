@@ -454,7 +454,7 @@ def tag_preview_page(tagname):
     allarticles = list(wikiarticles.find({'burned':False}).sort('date',pymongo.ASCENDING))
     result = []
     for i in allarticles:
-        if tagname in i.get('tags') and (i.get('publish')<=  datetime.utcnow()):
+        if tagname in i.get('tags') and (i.get('publish')<=  datetime.utcnow() or is_admin_loggedin()):
             result.append(i)
 
     return render_template('taginfo.html', tagname=tagname, articles=result)
