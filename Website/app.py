@@ -549,10 +549,10 @@ def search_page(query):
         article = wikiarticles.find_one({'_id':i.get('_id')})
         if query.lower() in remove_redactel(article.get("md")).lower():
             results.append(article)
-        elif query.lower() in article.get("title").lower():
+        elif query.lower() in remove_redactel(article.get("title")).lower():
             results.append(article)
     for i in allarticles:
-        if query.lower() in i.get("md").lower():
+        if query.lower() in remove_redactel(i.get("md")).lower():
             if not i in results:
                 results.append(i)
         elif query.lower() in remove_redactel(i.get("title")).lower():
