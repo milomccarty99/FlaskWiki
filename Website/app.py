@@ -454,7 +454,7 @@ def tag_preview_page(tagname):
     allarticles = list(wikiarticles.find({'burned':False}).sort('date',pymongo.ASCENDING))
     result = []
     for i in allarticles:
-        if tagname in i.get('tags'):
+        if tagname in i.get('tags') and (i.get('publish')<=  datetime.utcnow()):
             result.append(i)
 
     return render_template('taginfo.html', tagname=tagname, articles=result)
@@ -547,7 +547,7 @@ def search_page(query):
     results = []
     for i in allpriority:
         article = wikiarticles.find_one({'_id':i.get('_id')})
-        if query.lower() in article.get("md").lower():
+        if query.lower() in remove_redactel(article.get("md")).lower():
             results.append(article)
         elif query.lower() in article.get("title").lower():
             results.append(article)
@@ -555,7 +555,7 @@ def search_page(query):
         if query.lower() in i.get("md").lower():
             if not i in results:
                 results.append(i)
-        elif query.lower() in i.get("title").lower():
+        elif query.lower() in remove_redactel(i.get("title")).lower():
             if not i in results:
                 results.append(i)
     return render_template('articlelist.html',articlelist=results)
