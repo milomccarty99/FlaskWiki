@@ -701,7 +701,7 @@ def adminpassword_page():
         newadminpassword = request.form.get("adminpassword")
         admindata.update_one({'_id':'adminpassword'},{"$set":{"password":newadminpassword}})
         return redirect(url_for('adminpassword_page'))
-    return render_template('management/setadminpassword.html', adminpassword=passworddata.get("password"))
+    return render_template('management/setadminpassword.html', title="admin password", keyword=passworddata.get("password"))
 
 @app.route('/mcserverip', methods=['GET','POST'])
 def mcserverip_page():
@@ -712,7 +712,7 @@ def mcserverip_page():
         newmcserverip = request.form.get("adminpassword")
         admindata.update_one({'_id':'mcserverip'},{'$set':{'mcserverip':newmcserverip}})
         return redirect(url_for('mcserverip_page'))
-    return render_template('management/setadminpassword.html', adminpassword=mcserveripdata.get('mcserverip'))
+    return render_template('management/setadminpassword.html', title="MC Server IP", keyword=mcserveripdata.get('mcserverip'))
 
 @app.route('/featuredarticle', methods=['GET','POST'])
 def featuredarticle_page():
@@ -723,7 +723,7 @@ def featuredarticle_page():
         newfeaturedarticledata = request.form.get("adminpassword")
         admindata.update_one({'_id':'featuredarticle'},{'$set':{'featuredarticle':newfeaturedarticledata}})
         return redirect(url_for('featuredarticle_page'))
-    return render_template('management/setadminpassword.html', adminpassword=featuredarticledata.get('featuredarticle'))
+    return render_template('management/setadminpassword.html', title="featured article", keyword=featuredarticledata.get('featuredarticle'))
 
 @app.route('/tagslist', methods=['GET','POST'])
 def tags_list_page():
