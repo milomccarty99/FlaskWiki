@@ -19,7 +19,7 @@
 body{
     margin: 0;
     padding: 0;
-    font-family: Cambria;
+    font-family: 'Lucida Sans';
     color: var(--color5);
     background-color: var(--color2);
 }
