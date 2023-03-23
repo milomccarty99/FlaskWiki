@@ -181,7 +181,7 @@ def home_page():
     atp = admindata.find_one({'_id':'featuredarticle'}).get('featuredarticle')
     articletopreview = wikiarticles.find_one({'_id':atp})
     articlepagebody = remove_redactel(markdown.markdown(articletopreview.get("md")))
-    leaderboardarticle = wikiarticles.find_one({'_id':'leaderboard'})
+    leaderboardarticle = wikiarticles.find_one({'_id':'current-events'})
     leaderboard = markdown.markdown(leaderboardarticle.get("md"))
     mcserverip = admindata.find_one({'_id':'mcserverip'}).get('mcserverip')
     return render_template('homepage.html', articlepagebody=articlepagebody,articletitle=articletopreview.get('title'), articleid = articletopreview.get('_id'),leaderboard=leaderboard, mcserverip=mcserverip)
@@ -714,7 +714,16 @@ def mcserverip_page():
         return redirect(url_for('mcserverip_page'))
     return render_template('management/setadminpassword.html', adminpassword=mcserveripdata.get('mcserverip'))
 
-
+@app.route('/featuredarticle', methods=['GET','POST'])
+def featuredarticle_page():
+    if not is_admin_loggedin():
+        return redirect(url_for('home_page'))
+    featuredarticledata = admindata.find_one({'_id':'featuredarticle'})
+    if request.method == 'POST':
+        newfeaturedarticledata = request.form.get("adminpassword")
+        admindata.update_one({'_id':'featuredarticle'},{'$set':{'featuredarticle':newfeaturedarticledata}})
+        return redirect(url_for('featuredarticle_page'))
+    return render_template('management/setadminpassword.html', adminpassword=featuredarticledata.get('featuredarticle'))
 
 @app.route('/tagslist', methods=['GET','POST'])
 def tags_list_page():
