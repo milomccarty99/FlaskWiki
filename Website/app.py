@@ -451,7 +451,7 @@ def page_link_page(id):
 
 @app.route('/tag/<tagname>', methods=['GET','POST'])
 def tag_preview_page(tagname):
-    allarticles = list(wikiarticles.find({'burned':False}).sort('name',pymongo.ASCENDING))
+    allarticles = list(wikiarticles.find({'burned':False}).sort('title',pymongo.ASCENDING))
     result = []
     for i in allarticles:
         if tagname in i.get('tags') and (i.get('publish')<=  datetime.utcnow() or is_admin_loggedin()):
