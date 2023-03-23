@@ -22,7 +22,7 @@
     {{cookiebanner()}}
     <h2>{{tagname}}</h2>
     {%for article in articles%}
-    <p><a href="/page/{{article.get('_id')}}">{{article.get('title')}}</a></p> </br>
+    <p><a href="/page/{{article.get('_id')}}">{{article.get('title')}}</a></p>
     <hr />
     {% endfor %}
     <!--Custom HTML tags run at the bottom of the page so that we can mainupulate innerHTML-->
