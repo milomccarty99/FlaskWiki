@@ -180,7 +180,7 @@ def inject_template_scope():
 def home_page():
     atp = admindata.find_one({'_id':'featuredarticle'}).get('featuredarticle')
     articletopreview = wikiarticles.find_one({'_id':atp})
-    articlepagebody = remove_redactel(markdown.markdown(articletopreview.get("md")))
+    articlepagebody = ""
     leaderboardarticle = wikiarticles.find_one({'_id':'current-events'})
     leaderboard = (leaderboardarticle.get("md"))
     mcserverip = admindata.find_one({'_id':'mcserverip'}).get('mcserverip')
@@ -329,10 +329,10 @@ def content_page(id):
 def site_page(id):
     
     page_info = wikiarticles.find_one({"_id": id})
-    if page_info.get("burned") and not is_admin_loggedin():
-        return "lul"
     if not page_info:
         return redirect(url_for('page_not_found'))
+    if page_info.get("burned") and not is_admin_loggedin():
+        return "lul"
     title = page_info.get("title")
     mdtext = page_info.get("md")
     pagebody = remove_redactel(markdown.markdown(mdtext))
