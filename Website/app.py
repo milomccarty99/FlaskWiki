@@ -182,7 +182,7 @@ def home_page():
     articletopreview = wikiarticles.find_one({'_id':atp})
     articlepagebody = remove_redactel(markdown.markdown(articletopreview.get("md")))
     leaderboardarticle = wikiarticles.find_one({'_id':'current-events'})
-    leaderboard = markdown.markdown(leaderboardarticle.get("md"))
+    leaderboard = (leaderboardarticle.get("md"))
     mcserverip = admindata.find_one({'_id':'mcserverip'}).get('mcserverip')
     return render_template('homepage.html', articlepagebody=articlepagebody,articletitle=articletopreview.get('title'), articleid = articletopreview.get('_id'),leaderboard=leaderboard, mcserverip=mcserverip)
 
@@ -329,7 +329,9 @@ def content_page(id):
 def site_page(id):
     
     page_info = wikiarticles.find_one({"_id": id})
-    if not page_info or page_info.get("burned"):
+    if page_info.get("burned") and not is_admin_loggedin():
+        return "lul"
+    if not page_info:
         return redirect(url_for('page_not_found'))
     title = page_info.get("title")
     mdtext = page_info.get("md")
